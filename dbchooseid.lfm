@@ -1,0 +1,81 @@
+object ChooseIdDlg: TChooseIdDlg
+  Left = 234
+  Height = 413
+  Top = 201
+  Width = 900
+  Caption = 'Choose an id value'
+  ClientHeight = 413
+  ClientWidth = 900
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  LCLVersion = '2.0.12.0'
+  object ToolBar1: TToolBar
+    Left = 0
+    Height = 35
+    Top = 0
+    Width = 900
+    ButtonHeight = 32
+    ButtonWidth = 32
+    Caption = 'ToolBar1'
+    Images = Main.ImageList1
+    TabOrder = 0
+    object ToolButton1: TToolButton
+      Left = 1
+      Top = 2
+      Caption = 'ToolButton1'
+      ImageIndex = 2
+      OnClick = ToolButton1Click
+    end
+    object ToolButton2: TToolButton
+      Left = 33
+      Top = 2
+      Caption = 'ToolButton2'
+      ImageIndex = 6
+      OnClick = ToolButton2Click
+    end
+  end
+  object Panel1: TPanel
+    Left = 0
+    Height = 37
+    Top = 35
+    Width = 900
+    Align = alTop
+    BevelOuter = bvNone
+    ClientHeight = 37
+    ClientWidth = 900
+    TabOrder = 1
+    object FiltersComboBox: TComboBox
+      Left = 0
+      Height = 37
+      Top = 0
+      Width = 812
+      Align = alClient
+      ItemHeight = 0
+      TabOrder = 0
+    end
+    object BitBtn1: TBitBtn
+      Left = 812
+      Height = 37
+      Top = 0
+      Width = 44
+      Align = alRight
+      Images = Main.ImageList1
+      ImageIndex = 10
+      OnClick = BitBtn1Click
+      TabOrder = 1
+    end
+    object BitBtn2: TBitBtn
+      Left = 856
+      Height = 37
+      Top = 0
+      Width = 44
+      Align = alRight
+      Images = Main.ImageList1
+      ImageIndex = 11
+      OnClick = BitBtn2Click
+      TabOrder = 2
+    end
+  end
+end

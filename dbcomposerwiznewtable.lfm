@@ -1,0 +1,86 @@
+object WizNewTable: TWizNewTable
+  Left = 563
+  Height = 101
+  Top = 471
+  Width = 380
+  BorderStyle = bsDialog
+  Caption = 'WizNewTable'
+  ClientHeight = 101
+  ClientWidth = 380
+  Position = poMainFormCenter
+  LCLVersion = '2.0.12.0'
+  object Panel1: TPanel
+    Left = 4
+    Height = 36
+    Top = 4
+    Width = 372
+    Align = alTop
+    BorderSpacing.Around = 4
+    BevelOuter = bvNone
+    ClientHeight = 36
+    ClientWidth = 372
+    TabOrder = 0
+    object TableNameEdit: TEdit
+      Left = 36
+      Height = 36
+      Top = 0
+      Width = 336
+      Align = alClient
+      TabOrder = 0
+    end
+    object Image1: TImage
+      Left = 0
+      Height = 36
+      Top = 0
+      Width = 36
+      Align = alLeft
+      Center = True
+    end
+  end
+  object Panel3: TPanel
+    Left = 4
+    Height = 50
+    Top = 47
+    Width = 372
+    Align = alBottom
+    BorderSpacing.Around = 4
+    BevelOuter = bvNone
+    ClientHeight = 50
+    ClientWidth = 372
+    TabOrder = 1
+    object SpeedButton2: TSpeedButton
+      Left = 0
+      Height = 50
+      Top = 0
+      Width = 41
+      Align = alLeft
+      AutoSize = True
+      Caption = 'Ok'
+      Images = Main.ImageList1
+      ImageIndex = 13
+      OnClick = SpeedButton2Click
+    end
+    object SpeedButton3: TSpeedButton
+      Left = 41
+      Height = 50
+      Top = 0
+      Width = 64
+      Align = alLeft
+      AutoSize = True
+      Caption = 'Cancel'
+      Images = Main.ImageList1
+      ImageIndex = 11
+      OnClick = SpeedButton3Click
+    end
+    object Label1: TLabel
+      Left = 105
+      Height = 50
+      Top = 0
+      Width = 267
+      Align = alClient
+      AutoSize = False
+      ParentColor = False
+      WordWrap = True
+    end
+  end
+end
