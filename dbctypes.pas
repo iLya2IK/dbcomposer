@@ -18,7 +18,7 @@ unit dbctypes;
 interface
 
 uses
-  Classes, SysUtils, OGLFastList, DB;
+  SysUtils, OGLFastList, DB;
 
 type
 

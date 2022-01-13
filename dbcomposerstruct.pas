@@ -1607,8 +1607,8 @@ end;
 
 function TDBExtBlob.CheckValueActual(O: TDBExtBlobValue): Boolean;
 begin
-  if O.Actual and O.Valid then
-  if O.CheckActual and (not O.Loaded) then
+  if O.Actual and O.Valid and
+     O.CheckActual and (not O.Loaded) then
   begin
     if DBHelper.Threaded then
       DBHelper.ThreadPool.Add(TDBLoadBlobValueJob.Create(O)) else
@@ -2033,6 +2033,8 @@ begin
     toCheckExists : Result := FCheckExists;
     toIsTemp      : Result := FIsTemp;
     toWORowID     : Result := FWORowID;
+  else
+    Result := false;
   end;
 end;
 

@@ -36,7 +36,7 @@ uses
   dbComposerTreeView,
   dbcomposertypes, dbComposerStruct, dbComposerUtils, dbComposerConsts,
   dbComposerCompleteHint,
-  SynEditKeyCmds, SynEditTypes, SynHighlighterHTML,
+  SynEditKeyCmds, SynEditTypes,
 
   dbComposerWizards;
 
@@ -1285,6 +1285,7 @@ begin
       case cfgRec.CfgField of
         crfStructure : begin
           jStr := TJSONSqliteExpr.Create('');
+          S := '';
         end;
         crfExtBlobs : begin
           jObj := TJSONObject.Create([JSON_CFG_KIND, DBHelper.JsonBlobKinds[0].Name]);
@@ -1302,6 +1303,8 @@ begin
           jObj := TJSONObject.Create([JSON_CFG_KIND, DBHelper.JsonFuncClasses[0].Name]);
           S := JSON_CFG_FUNCS+cObjPostfix;
         end;
+      else
+        S := '';
       end;
       if Assigned(jStr) then
       begin
@@ -1531,6 +1534,7 @@ begin
       if Assigned(aNode) then
       begin
         aTreeNode := nil;
+        cfg0 := nil;
         for i := 0 to cfgItem.Count-1 do
         begin
           cfg0 := TConfigRec(cfgItem[i].Data);
@@ -1541,7 +1545,7 @@ begin
               Break;
             end;
         end;
-        if assigned(aTreeNode) then
+        if assigned(aTreeNode) and assigned(cfg0) then
         begin
           if cfg0.JsonData is TJSONString then
             TJSONString(cfg0.JsonData).AsString := cfg.JsonData.AsString else
@@ -3390,7 +3394,8 @@ begin
       if (data.Items[i] is TJSONObject) then
         S := id+cObjPostfix else
         s := '';
-    end;
+    end else
+        s := '';
     if data.Items[i] is TJSONObject then
       tp := crtObject else
     if data.Items[i] is TJSONArray then

@@ -18,7 +18,7 @@ unit dbComposerWizNewTable;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls,
+  SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls,
   Buttons,
   dbComposerStruct, dbComposerConsts;
 

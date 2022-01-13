@@ -76,7 +76,8 @@ begin
   if Assigned(Editor) then begin
     NewText := Editor.Text;
     Editor.Visible := false;
-  end;
+  end else
+    NewText := '';
   Editor := nil;
   Node:=EditingItem;
 

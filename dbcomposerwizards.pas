@@ -18,7 +18,7 @@ unit dbComposerWizards;
 interface
 
 uses
-  Classes, SysUtils,
+  SysUtils,
   OGLFastList,
   ExtSqlite3DS,
   dbComposerStruct, dbComposerConfigParser;

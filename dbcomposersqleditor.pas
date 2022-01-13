@@ -1621,7 +1621,8 @@ begin
     if TableTree.Selected is TDBTreeElementColumn then
       constr := TDBTreeElementColumn(TableTree.Selected).Field.Constraints else
     if TableTree.Selected is TDBTreeElementTable then
-      constr := TDBTreeElementTable(TableTree.Selected).Table.Constraints;
+      constr := TDBTreeElementTable(TableTree.Selected).Table.Constraints else
+      constr := nil;
     if assigned(constr) then
     with TDBTreeConstrMenuItem(Sender) do
     begin

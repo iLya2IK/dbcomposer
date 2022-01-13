@@ -21,7 +21,7 @@ interface
 
 uses
   Classes, SysUtils,
-  OGLFastList, OGLFastNumList,
+  OGLFastNumList,
   ExtSqliteTokens,
   ExtSqliteSynCheck,
   dbComposerStruct;

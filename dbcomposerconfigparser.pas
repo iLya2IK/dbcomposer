@@ -18,7 +18,7 @@ unit dbComposerConfigParser;
 interface
 
 uses
-  Classes, SysUtils, fpJSON, jsonscanner, jsonreader,
+  SysUtils, fpJSON, jsonreader,
   ECommonObjs,
   ExtSqliteTokens, ExtSqliteUtils;
 

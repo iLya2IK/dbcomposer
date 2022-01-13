@@ -217,7 +217,7 @@ type
   end;
 
 function NestedTokenVisStyle(C: TColor; S : TFontStyles) : TNestedTokenVisStyle;
-function ExtractTableField(const aPath : String; var TN, FN : String) : Boolean;
+function ExtractTableField(const aPath : String; out TN, FN : String) : Boolean;
 
 const {$IFDEF UNIX}
       cSysDelimiter = DirectorySeparator;
@@ -238,7 +238,7 @@ implementation
 
 uses LazUTF8, ExtSqliteTokens, dbComposerConfigParser, dbComposerConsts;
 
-function ExtractTableField(const aPath : String; var TN, FN : String) : Boolean;
+function ExtractTableField(const aPath : String; out TN, FN : String) : Boolean;
 var Expr : TSqliteExpr;
 begin
   Expr := TSqliteExpr.Create(aPath);
@@ -485,6 +485,8 @@ begin
          K := ntkNumber;
     MODE_SYM :
          K := ntkSymbol;
+  else
+    K := ntkNone;
   end;
   AddToken(SS, K, s);
   M := MODE_NONE;
@@ -791,9 +793,12 @@ begin
     O := TNestedExpr(TComboBox(Control).Items.Objects[Index]);
     C := TComboBox(Control).Canvas;
   end else
+  begin
     O := nil;
+    C := nil;
+  end;
 
-  if Assigned(O) then
+  if Assigned(O) and Assigned(C) then
   begin
     if odFocused in State then
     begin
