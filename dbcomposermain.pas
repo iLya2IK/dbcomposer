@@ -146,6 +146,7 @@ type
     procedure FormDestroy(Sender : TObject);
     procedure FormHide(Sender: TObject);
     procedure FormShow(Sender : TObject);
+    procedure MainPagesChanging(Sender: TObject; var AllowChange: Boolean);
     procedure NewCfgClick(Sender : TObject);
     procedure OpenCfgClick(Sender : TObject);
     procedure OpenDBClick(Sender : TObject);
@@ -662,6 +663,7 @@ begin
   FSynSQLSyn.FieldNameAttri.Style := [fsItalic];
   FSynSQLSyn.StringAttri.Foreground := clGreen;
   FSynSQLSyn.StringAttri.Style := [fsBold];
+  FSynSQLSyn.TableNames.Add('sqlite_master');
   FSynSQLSyn.Enabled := true;
 
   SQLEditor.Highlighter := FSynSQLSyn;
@@ -883,8 +885,8 @@ end;
 
 procedure DrawNodeText(IsSelected: Boolean; NodeRect: TRect;
                              const S : String);
-var
-  Details: TThemedElementDetails;
+{var
+  Details: TThemedElementDetails;    }
 begin
   if IsSelected then
   begin
@@ -892,16 +894,16 @@ begin
     Sender.Canvas.FillRect(NodeRect);
   end;
 
-  Details := ThemeServices.GetElementDetails(ttTreeviewDontCare);
+//  Details := ThemeServices.GetElementDetails(ttTreeviewDontCare);
 
   NodeRect.Right := NodeRect.Left + Sender.Canvas.TextWidth(S);
-  if (tvoThemedDraw in Sender.Options) then
+{  if (tvoThemedDraw in Sender.Options) then
     ThemeServices.DrawText(Sender.Canvas, Details, S, NodeRect, DT_LEFT or
                                                           DT_VCENTER or
                                                           DT_SINGLELINE or
                                                           DT_NOPREFIX, 0)
-  else
-    DrawText(Sender.Canvas.Handle, PChar(S), -1, NodeRect, DT_LEFT or
+  else   }
+  DrawText(Sender.Canvas.Handle, PChar(S), -1, NodeRect, DT_LEFT or
                                                      DT_VCENTER or
                                                      DT_SINGLELINE or
                                                      DT_NOPREFIX);
@@ -1094,6 +1096,8 @@ var cfgRec : TConfigRec;
     StateImageRes: TScaledImageListResolution;
     stim : Integer;
 begin
+  if not Assigned(FConfig) then Exit;
+
   FConfig.Lock;
   try
     if Assigned(FConfig) and Assigned(Node.Data) then
@@ -1345,6 +1349,7 @@ begin
           Expr.OpenBracket;
           Expr.AddId(cIdField);
           Expr.AddId(sqluAffinityToStr(dtaInteger));
+          Expr.AddKs([kwPRIMARY, kwKEY], skfoUpperCase);
           Expr.CloseBracket;
           jStr := TJSONSqliteExpr.Create(Expr.FormatedStr(skfoOriginal));
         finally
@@ -1849,7 +1854,7 @@ procedure AddNewRecordOption(const aCaption : String; aImInd : Integer;
 var
   It : TCfgMenuItem;
   Btn : TCfgToolButton;
-  lastbtnidx : integer;
+  lastbtnidx, p, cp : integer;
 begin
   It := TCfgMenuItem.Create(nil);
   It.Caption := aCaption;
@@ -1861,11 +1866,15 @@ begin
   Btn := TCfgToolButton.Create(ToolBar3);
   Btn.Hint := aCaption;
   Btn.ImageIndex := aImInd;
-  lastbtnidx := ToolBar3.ButtonCount - 1;
-  if lastbtnidx > -1 then
-    Btn.Left := ToolBar3.Buttons[lastbtnidx].Left + ToolBar3.Buttons[lastbtnidx].Width + 10
-  else
-    Btn.Left := 0;
+  p := 0;
+  lastbtnidx := 0;
+  while lastbtnidx < ToolBar3.ControlCount do
+  begin
+    cp:= ToolBar3.Controls[lastbtnidx].Left + ToolBar3.Controls[lastbtnidx].Width + 10;
+    if p < cp then p := cp;
+    inc(lastbtnidx);
+  end;
+  Btn.Left := p;
   if assigned(data) then begin
     Btn.CfgRec := TScissorConfigRec.Create(data);
     Btn.CfgItem := ConfigItem;
@@ -2252,6 +2261,10 @@ begin
 
 
   Timer1.Enabled := True;
+end;
+
+procedure TMain.MainPagesChanging(Sender: TObject; var AllowChange: Boolean);
+begin
 end;
 
 procedure TMain.NewCfgClick(Sender : TObject);
@@ -2917,6 +2930,11 @@ begin
 
   if Assigned(FConfig) then
   begin
+    SaveCfgAs.Enabled  := true;
+    LaunchWizard.Enabled := true;
+    ModSheet.TabVisible := true;
+    SQLSheet.TabVisible := true;
+
     FConfigFileLoaded := Now;
     ConfigChanged := false;
     RefreshDatabaseAndStruct;
@@ -2924,12 +2942,16 @@ begin
   begin
     SaveCfgAs.Enabled  := false;
     RefreshCfg.Enabled := false;
+    LaunchWizard.Enabled:=false;
+    ModSheet.TabVisible:=false;
+    SQLSheet.TabVisible:=false;
 
     ConfigChanged := false;
 
     FStructure.Clear;
     ChooseTable.Items.Clear;
     FSynSQLSyn.TableNames.Clear;
+    FSynSQLSyn.FieldNames.Clear;
     FTableList.Clear;
     DataSet.Active := false;
     SetDBFileName('');
@@ -3092,6 +3114,7 @@ begin
     FTableList.Clear;
     ChooseTable.Items.Clear;
     FSynSQLSyn.TableNames.Clear;
+    FSynSQLSyn.FieldNames.Clear;
 
     DataSet.SQL := 'SELECT * FROM sqlite_master where type == ''table'' and name not like ''sqlite_%'';';
 
@@ -3404,6 +3427,7 @@ end;
 procedure TMain.UpdateCfgStruct(fromind : integer);
 var i : integer;
 begin
+  if not Assigned(FConfig) then Exit;
   if fromind < 0 then fromind := 0;
   FConfig.Lock;
   try
@@ -3487,6 +3511,7 @@ function TMain.StartOpenEditSQLDialog(cfg : TJSONData) : Boolean;
 var i, k : integer;
     memdb : Pointer;
 begin
+  if not Assigned(FConfig) then Exit;
   memdb := sqluNewMemoryDB('tempmem');
   try
     FConfig.Lock;

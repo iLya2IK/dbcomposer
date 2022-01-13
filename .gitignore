@@ -28,6 +28,7 @@
 *.zip
 *.7z
 *.png
+*.trc
 dbcomposer
 link*.res
 ppas.bat
