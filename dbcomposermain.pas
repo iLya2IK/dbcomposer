@@ -1318,10 +1318,12 @@ var cfgRec : TConfigRec;
     cfgItem : TTreeNode;
     S : String;
     Expr : TSqliteExpr;
+    df : TSqliteKwFormatOption;
 begin
   S := InputBox(Caption, rsSetNewTableName, '');
   if Length(S) > 0 then
   begin
+    df := DBHelper.KwFormat;
     if ExtractSendersData(Sender, cfgItem) then
     begin
       cfgRec := TConfigRec(cfgItem.Data);
@@ -1329,12 +1331,12 @@ begin
       begin
         Expr := TSqliteExpr.Create('');
         try
-          Expr.AddKs([kwCREATE, kwTABLE, kwIF, kwNOT, kwEXISTS], skfoUpperCase);
+          Expr.AddKs([kwCREATE, kwTABLE, kwIF, kwNOT, kwEXISTS], df);
           Expr.AddId(S);
           Expr.OpenBracket;
           Expr.AddId(cIdField);
           Expr.AddId(sqluAffinityToStr(dtaInteger));
-          Expr.AddKs([kwPRIMARY, kwKEY], skfoUpperCase);
+          Expr.AddKs([kwPRIMARY, kwKEY], df);
           Expr.CloseBracket;
           jStr := TJSONSqliteExpr.Create(Expr.FormatedStr(skfoOriginal));
         finally

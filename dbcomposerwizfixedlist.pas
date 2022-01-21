@@ -112,7 +112,7 @@ begin
     FCfg.Lock;
     try
       //create table, populate it with values, add internal indexes
-      df := skfoUpperCase;
+      df := DBHelper.KwFormat;
       T := TDBTable.Create(nil, TableNameEdit.Text);
       try
         T.AddField(cIdField, dtaInteger, true);

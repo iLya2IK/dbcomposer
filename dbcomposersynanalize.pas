@@ -194,6 +194,7 @@ end;
 var aForTable : TDBTable;
     aForField : String;
 begin
+  aForField := '';
   if not Assigned(FSynExpr) then
   begin
     FErrorCode := SAER_SYNEXPR_NOT_ASSIGNED;

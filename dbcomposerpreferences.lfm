@@ -11,19 +11,20 @@ object PrefsDlg: TPrefsDlg
   Position = poScreenCenter
   LCLVersion = '2.0.12.0'
   object Notebook1: TNotebook
-    Left = 210
-    Height = 322
-    Top = 0
-    Width = 386
-    PageIndex = 0
+    Left = 212
+    Height = 318
+    Top = 2
+    Width = 382
+    PageIndex = 1
     Align = alClient
+    BorderSpacing.Around = 2
     TabOrder = 0
     object EditorPage: TPage
       inline SampleSynEdit: TSynEdit
         Left = 0
-        Height = 96
+        Height = 104
         Top = 34
-        Width = 386
+        Width = 382
         Align = alClient
         Font.Height = 13
         Font.Name = 'DejaVu Sans Mono'
@@ -488,16 +489,17 @@ object PrefsDlg: TPrefsDlg
         MouseLinkColor.Foreground = clBlue
         LineHighlightColor.Background = clNone
         LineHighlightColor.Foreground = clNone
+        OnStatusChange = SampleSynEditStatusChange
         inline SynLeftGutterPartList1: TSynGutterPartList
         end
       end
       object AttribSelector: TComboBox
         Left = 0
-        Height = 35
-        Top = 130
-        Width = 386
+        Height = 23
+        Top = 138
+        Width = 382
         Align = alBottom
-        ItemHeight = 0
+        ItemHeight = 15
         OnChange = AttribSelectorChange
         Style = csDropDownList
         TabOrder = 1
@@ -505,12 +507,12 @@ object PrefsDlg: TPrefsDlg
       object Panel2: TPanel
         Left = 0
         Height = 157
-        Top = 165
-        Width = 386
+        Top = 161
+        Width = 382
         Align = alBottom
         BevelOuter = bvNone
         ClientHeight = 157
-        ClientWidth = 386
+        ClientWidth = 382
         TabOrder = 2
         object FontStyleSelector: TCheckGroup
           Left = 0
@@ -529,7 +531,7 @@ object PrefsDlg: TPrefsDlg
           ChildSizing.Layout = cclLeftToRightThenTopToBottom
           ChildSizing.ControlsPerLine = 1
           ClientHeight = 137
-          ClientWidth = 118
+          ClientWidth = 116
           Items.Strings = (
             'Bold'
             'Italic'
@@ -553,31 +555,31 @@ object PrefsDlg: TPrefsDlg
         end
         object ForeColorBox: TColorBox
           Left = 137
-          Height = 35
+          Height = 24
           Top = 88
           Width = 199
           Style = [cbStandardColors, cbExtendedColors, cbSystemColors, cbIncludeNone, cbIncludeDefault, cbCustomColor]
-          ItemHeight = 0
+          ItemHeight = 16
           OnChange = ForeColorBoxChange
           TabOrder = 1
         end
         object BackColorBox: TColorBox
           Left = 137
-          Height = 35
+          Height = 24
           Top = 24
           Width = 199
           DefaultColorColor = clWhite
           NoneColorColor = clWhite
           Style = [cbStandardColors, cbExtendedColors, cbSystemColors, cbIncludeNone, cbIncludeDefault, cbCustomColor]
-          ItemHeight = 0
+          ItemHeight = 16
           OnChange = BackColorBoxChange
           TabOrder = 2
         end
         object Label1: TLabel
           Left = 137
-          Height = 19
+          Height = 15
           Top = 0
-          Width = 74
+          Width = 64
           Caption = 'Background'
           ParentColor = False
         end
@@ -601,9 +603,9 @@ object PrefsDlg: TPrefsDlg
         end
         object Label2: TLabel
           Left = 137
-          Height = 19
+          Height = 15
           Top = 64
-          Width = 73
+          Width = 62
           Caption = 'Foreground'
           ParentColor = False
         end
@@ -612,11 +614,11 @@ object PrefsDlg: TPrefsDlg
         Left = 0
         Height = 34
         Top = 0
-        Width = 386
+        Width = 382
         Align = alTop
         BevelOuter = bvNone
         ClientHeight = 34
-        ClientWidth = 386
+        ClientWidth = 382
         TabOrder = 3
         object FontSample: TLabel
           Left = 0
@@ -628,7 +630,7 @@ object PrefsDlg: TPrefsDlg
           ParentColor = False
         end
         object Button1: TButton
-          Left = 278
+          Left = 274
           Height = 34
           Top = 0
           Width = 108
@@ -637,6 +639,32 @@ object PrefsDlg: TPrefsDlg
           OnClick = Button1Click
           TabOrder = 0
         end
+      end
+    end
+    object FormatterPage: TPage
+      object KwFormatSelector: TComboBox
+        Left = 8
+        Height = 23
+        Top = 32
+        Width = 360
+        ItemHeight = 15
+        ItemIndex = 0
+        Items.Strings = (
+          'UPPERCASE'
+          'lowercase'
+          'With a capital'
+        )
+        Style = csDropDownList
+        TabOrder = 0
+        Text = 'UPPERCASE'
+      end
+      object Label3: TLabel
+        Left = 8
+        Height = 15
+        Top = 8
+        Width = 130
+        Caption = 'Default keywords format'
+        ParentColor = False
       end
     end
   end
@@ -679,7 +707,13 @@ object PrefsDlg: TPrefsDlg
     Align = alLeft
     ReadOnly = True
     TabOrder = 2
+    OnSelectionChanged = PrefsTreeSelectionChanged
     Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips, tvoThemedDraw]
+    Items.Data = {
+      F9FFFFFF020002000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000000000
+      00000006000000456469746F72FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000
+      0000000000000D00000053514C20466F726D6174746572
+    }
   end
   object Splitter1: TSplitter
     Left = 205

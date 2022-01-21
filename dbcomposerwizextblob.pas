@@ -125,7 +125,7 @@ begin
     FCfg.Lock;
     try
       //create table, add ext blobs
-      df := skfoUpperCase;
+      df := DBHelper.KwFormat;
       T := TDBTable.Create(nil, TableNameEdit.Text);
       try
         //TableName(id integer primary key autoincrement,

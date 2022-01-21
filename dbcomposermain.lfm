@@ -58,13 +58,13 @@ object Main: TMain
       Options = [nboDoChangeOnSetIndex]
       object ConfigSheet: TTabSheet
         Caption = 'Config'
-        ClientHeight = 384
-        ClientWidth = 571
+        ClientHeight = 389
+        ClientWidth = 573
         object ToolBar3: TToolBar
           Left = 0
           Height = 48
           Top = 0
-          Width = 571
+          Width = 573
           ButtonHeight = 44
           ButtonWidth = 23
           Caption = 'ToolBar3'
@@ -142,12 +142,12 @@ object Main: TMain
         object StructPanel: TPanel
           Left = 0
           Height = 104
-          Top = 280
-          Width = 571
+          Top = 285
+          Width = 573
           Align = alBottom
           BevelOuter = bvLowered
           ClientHeight = 104
-          ClientWidth = 571
+          ClientWidth = 573
           Color = clInfoBk
           ParentColor = False
           TabOrder = 1
@@ -155,7 +155,7 @@ object Main: TMain
             Left = 4
             Height = 96
             Top = 4
-            Width = 563
+            Width = 565
             Align = alClient
             BorderSpacing.Around = 3
             BorderStyle = bsNone
@@ -171,8 +171,8 @@ object Main: TMain
           Cursor = crVSplit
           Left = 0
           Height = 5
-          Top = 275
-          Width = 571
+          Top = 280
+          Width = 573
           Align = alBottom
           ResizeAnchor = akBottom
         end
@@ -197,7 +197,7 @@ object Main: TMain
           Gutter.Visible = False
           Gutter.Width = 0
           Gutter.MouseActions = <>
-          RightGutter.Width = 17
+          RightGutter.Width = 15
           RightGutter.MouseActions = <>
           Keystrokes = <          
             item
@@ -654,7 +654,7 @@ object Main: TMain
           end
           inline SynRightGutterPartList1: TSynRightGutterPartList
             object SynGutterLineNumber1: TSynGutterLineNumber
-              Width = 17
+              Width = 15
               MouseActions = <>
               MarkupInfo.Background = clBtnFace
               MarkupInfo.Foreground = clNone
@@ -1332,7 +1332,6 @@ object Main: TMain
         ScrollWidth = 184
         Style = lbOwnerDrawVariable
         TabOrder = 0
-        TopIndex = -1
       end
       object DBNameLabel: TLabel
         Left = 0

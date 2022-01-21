@@ -218,6 +218,8 @@ type
     FCummulatedStates : TStateChanges;
     fDefaultTokenVisStyles, fTokenVisStyles : TNestedTokenStyles;
 
+    FKwFormat : TSqliteKwFormatOption;
+
     FStateListeners : TMethodList;
 
     FEditorFontName : String;
@@ -229,6 +231,7 @@ type
     procedure SetEditorFontName(AValue : String);
     procedure SetEditorFontSize(AValue : Integer);
     procedure SendStateChanged(aState : TDBHelperState);
+    procedure SetKwFormat(AValue: TSqliteKwFormatOption);
   public
     JsonIndxClasses : TJsonCfgEnums;
     JsonIndxStringsStyles : TJsonCfgEnums;
@@ -260,6 +263,7 @@ type
 
     property Sqlite3AttrsDefs : TSynAttrsDefs read FAttrsDefs;
     property Sqlite3Highlighter : TSynSQLite3Syn read FSynSQL;
+    property KwFormat : TSqliteKwFormatOption read FKwFormat write SetKwFormat;
     property DefaultTokenVisStyles : TNestedTokenStyles read fDefaultTokenVisStyles;
     property TokenVisStyles : TNestedTokenStyles read fTokenVisStyles;
     procedure SetFontParamsFromCompletionObj(O : TCompletionObj; F : TFont; out
@@ -817,6 +821,13 @@ begin
     FCummulatedStates.Cummulate(aState);
 end;
 
+procedure TDBHelper.SetKwFormat(AValue: TSqliteKwFormatOption);
+begin
+  if FKwFormat=AValue then Exit;
+  FKwFormat:=AValue;
+  SendStateChanged(dbhsFormatSettings);
+end;
+
 function TDBHelper.GetJsonBlobKindEnum(aKind : TDBExtBlobKind) : TJsonCfgEnum;
 var i : integer;
 begin
@@ -965,6 +976,8 @@ begin
   begin
     fTokenVisStyles[st] := fDefaultTokenVisStyles[st];
   end;
+
+  FKwFormat := skfoUpperCase;
 end;
 
 procedure TDBHelper.DrawListItem(Control : TWinControl; Index : Integer;
@@ -1052,6 +1065,7 @@ const cBackground = 'Background';
       cStyle      = 'Style';
       cFontName   = 'FontName';
       cFontSize   = 'FontSize';
+      cKeyWordFormat = 'KeyWordFormat';
 
 procedure TDBHelper.LoadFromConfig(aConfig : TJSONPropStorage);
 var i : integer;
@@ -1068,6 +1082,7 @@ begin
   try
     EditorFontName := aConfig.ReadString(cFontName, FEditorFontName);
     FEditorFontSize := aConfig.ReadInteger(cFontSize, FEditorFontSize);
+    FKwFormat := TSqliteKwFormatOption(aConfig.ReadInteger(cKeyWordFormat, Ord(FKwFormat) - 1) + 1);
   finally
     EndUpdate;
   end;
@@ -1086,6 +1101,7 @@ begin
   end;
   aConfig.WriteString(cFontName, FEditorFontName);
   aConfig.WriteInteger(cFontSize, FEditorFontSize);
+  aConfig.WriteInteger(cKeyWordFormat, Ord(FKwFormat) - 1);
 end;
 
 procedure TDBHelper.SetFontParamsFromCompletionObj(O : TCompletionObj;

@@ -20,7 +20,7 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, ComCtrls,
   Buttons, StdCtrls, ColorBox, SynEdit, SynHighlighterSQLite3,
-  SynEditHighlighter;
+  SynEditHighlighter, SynEditTypes;
 
 type
 
@@ -29,6 +29,7 @@ type
   TPrefsDlg = class(TForm)
     BackChooseButton : TButton;
     Button1 : TButton;
+    KwFormatSelector: TComboBox;
     ForeChooseButton : TButton;
     ForeColorBox : TColorBox;
     BackColorBox : TColorBox;
@@ -39,8 +40,10 @@ type
     Label1 : TLabel;
     Label2 : TLabel;
     FontSample : TLabel;
+    Label3: TLabel;
     Notebook1 : TNotebook;
     EditorPage : TPage;
+    FormatterPage: TPage;
     Panel1 : TPanel;
     OKButton : TSpeedButton;
     CancelButton : TSpeedButton;
@@ -60,6 +63,9 @@ type
     procedure ForeColorBoxChange(Sender : TObject);
     procedure FormCreate(Sender : TObject);
     procedure OKButtonClick(Sender : TObject);
+    procedure PrefsTreeSelectionChanged(Sender: TObject);
+    procedure SampleSynEditStatusChange(Sender: TObject;
+      Changes: TSynStatusChanges);
     procedure SpeedButton1Click(Sender : TObject);
   private
     FSynSQL : TSynSQLite3Syn;
@@ -79,7 +85,7 @@ var
 
 implementation
 
-uses dbComposerUtils;
+uses dbComposerUtils, ExtSqliteUtils;
 
 function ShowPreferences : Boolean;
 begin
@@ -116,10 +122,43 @@ begin
     end;
     DBHelper.EditorFontName := FontDialog1.Font.Name;
     DBHelper.EditorFontSize := FontDialog1.Font.Height;
+    DBHelper.KwFormat       := TSqliteKwFormatOption(KwFormatSelector.ItemIndex+1);
   finally
     DBHelper.EndUpdate;
   end;
   ModalResult := mrOK;
+end;
+
+procedure TPrefsDlg.PrefsTreeSelectionChanged(Sender: TObject);
+begin
+  if Assigned(PrefsTree.Selected) then
+  begin
+    case PrefsTree.Selected.Index of
+      0 : Notebook1.PageIndex := 0;
+      1 : Notebook1.PageIndex := 1;
+    end;
+  end;
+end;
+
+procedure TPrefsDlg.SampleSynEditStatusChange(Sender: TObject;
+  Changes: TSynStatusChanges);
+var S : String;
+    Attr : TSynHighlighterAttributes;
+begin
+  if ([scCaretX, scCaretY] * Changes <> []) then
+  begin
+    if Visible then
+    begin
+      SampleSynEdit.GetHighlighterAttriAtRowCol(SampleSynEdit.LogicalCaretXY,
+                                                                        S,
+                                                                        Attr);
+      if Assigned(Attr) then
+      begin
+        AttribSelector.ItemIndex := AttribSelector.Items.IndexOfObject(Attr);
+        UpdateAttr;
+      end;
+    end;
+  end;
 end;
 
 procedure TPrefsDlg.SpeedButton1Click(Sender : TObject);
@@ -215,9 +254,13 @@ end;
 procedure TPrefsDlg.InitState;
 var i : integer;
 begin
+  PrefsTree.Select(PrefsTree.Items[0]);
+
   FSynSQL.Assign(DBHelper.Sqlite3Highlighter);
 
   UpdateFont(DBHelper.EditorFontName, DBHelper.EditorFontSize);
+
+  KwFormatSelector.ItemIndex := Ord(DBHelper.KwFormat)-1;
 
   FItemSwitching := false;
 

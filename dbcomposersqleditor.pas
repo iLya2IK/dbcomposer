@@ -1187,7 +1187,7 @@ begin
     begin
       if Assigned(synExpr) then
         aFormat := synExpr.DetectKeywordFormat else
-        aFormat := skfoUpperCase;
+        aFormat := DBHelper.KwFormat;
       aTableExpr := cTable.BuildCreateExpression(false, aFormat);
       if Assigned(synExprs) and
          Assigned(synExpr) then

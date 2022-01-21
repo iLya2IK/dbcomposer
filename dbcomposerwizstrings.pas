@@ -61,7 +61,7 @@ begin
   FCfg.Lock;
   try
     //create table, add internal indexes
-    df := skfoUpperCase;
+    df := DBHelper.KwFormat;
     T := TDBTable.Create(nil, WizNewTable.TableNameEdit.Text);
     try
       F := T.AddField(cIdField, dtaInteger, true);

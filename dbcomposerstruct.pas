@@ -665,7 +665,7 @@ begin
     Compare;
   Randomize;
   FAlterExpr := '';
-  fmt := skfoUpperCase;
+  fmt := DBHelper.KwFormat;
   // generating alt expression
   Exprs := TSqliteExprs.Create('');
   try
