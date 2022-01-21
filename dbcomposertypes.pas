@@ -1077,8 +1077,8 @@ begin
         MaxValue := -1;
         MinValue := 0;
         Alignment := taLeftJustify;
-        Font.Color := vDefaultTokenVisStyles[ntkNumber].Color;
-        Font.Style := vDefaultTokenVisStyles[ntkNumber].Style;
+        Font.Color := DBHelper.TokenVisStyles[ntkNumber].Color;
+        Font.Style := DBHelper.TokenVisStyles[ntkNumber].Style;
         OnChange := @OnValueChanged;
       end;
       AddValuedControl(ChangeFloat, C);
@@ -1198,8 +1198,8 @@ begin
           MaxValue := 10000000;
           MinValue := -10000000;
           Alignment := taLeftJustify;
-          Font.Color := vDefaultTokenVisStyles[ntkNumber].Color;
-          Font.Style := vDefaultTokenVisStyles[ntkNumber].Style;
+          Font.Color := DBHelper.TokenVisStyles[ntkNumber].Color;
+          Font.Style := DBHelper.TokenVisStyles[ntkNumber].Style;
           OnChange := @OnValueChanged;
         end;
         AddValuedControl(ChangeInteger, C);
@@ -1411,7 +1411,7 @@ begin
                      DataSet.Fields[1].AsUTF8String;
         FTmpObjects.Add( TNestedExpr.Create(Stack.Structure, S2,
                                             DataSet.Fields[0].AsInteger,
-                                            vDefaultTokenVisStyles) );
+                                            DBHelper.TokenVisStyles) );
         inc(ind);
         DataSet.Next;
       end;

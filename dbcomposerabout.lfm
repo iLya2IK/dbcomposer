@@ -1,0 +1,52 @@
+object AboutDlg: TAboutDlg
+  Left = 541
+  Height = 389
+  Top = 114
+  Width = 320
+  BorderStyle = bsDialog
+  Caption = 'About'
+  ClientHeight = 389
+  ClientWidth = 320
+  OnCreate = FormCreate
+  LCLVersion = '2.0.12.0'
+  object Image1: TImage
+    Left = 88
+    Height = 128
+    Top = 16
+    Width = 128
+    Center = True
+  end
+  object Label1: TLabel
+    Left = 8
+    Height = 48
+    Top = 160
+    Width = 305
+    Alignment = taCenter
+    AutoSize = False
+    Caption = 'Copyright (c) Ilya Medvedkov'#10'2021-2022'
+    ParentColor = False
+    WordWrap = True
+  end
+  object Button1: TButton
+    Left = 120
+    Height = 25
+    Top = 352
+    Width = 75
+    Caption = 'Ok'
+    ModalResult = 1
+    TabOrder = 0
+  end
+  object AboutMemo: TMemo
+    Left = 8
+    Height = 130
+    Top = 208
+    Width = 305
+    BorderStyle = bsNone
+    Color = clBackground
+    Font.Color = clBtnText
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssAutoVertical
+    TabOrder = 1
+  end
+end

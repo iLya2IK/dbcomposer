@@ -1,7 +1,7 @@
 object Main: TMain
-  Left = 292
+  Left = 571
   Height = 554
-  Top = 98
+  Top = 114
   Width = 774
   Caption = 'DB Composer'
   ClientHeight = 554
@@ -11,7 +11,8 @@ object Main: TMain
   OnDestroy = FormDestroy
   OnHide = FormHide
   OnShow = FormShow
-  LCLVersion = '2.0.10.0'
+  Position = poScreenCenter
+  LCLVersion = '2.0.12.0'
   object LogMemo: TMemo
     Left = 0
     Height = 130
@@ -57,13 +58,13 @@ object Main: TMain
       Options = [nboDoChangeOnSetIndex]
       object ConfigSheet: TTabSheet
         Caption = 'Config'
-        ClientHeight = 389
-        ClientWidth = 573
+        ClientHeight = 384
+        ClientWidth = 571
         object ToolBar3: TToolBar
           Left = 0
           Height = 48
           Top = 0
-          Width = 573
+          Width = 571
           ButtonHeight = 44
           ButtonWidth = 23
           Caption = 'ToolBar3'
@@ -141,12 +142,12 @@ object Main: TMain
         object StructPanel: TPanel
           Left = 0
           Height = 104
-          Top = 285
-          Width = 573
+          Top = 280
+          Width = 571
           Align = alBottom
           BevelOuter = bvLowered
           ClientHeight = 104
-          ClientWidth = 573
+          ClientWidth = 571
           Color = clInfoBk
           ParentColor = False
           TabOrder = 1
@@ -154,7 +155,7 @@ object Main: TMain
             Left = 4
             Height = 96
             Top = 4
-            Width = 565
+            Width = 563
             Align = alClient
             BorderSpacing.Around = 3
             BorderStyle = bsNone
@@ -170,21 +171,21 @@ object Main: TMain
           Cursor = crVSplit
           Left = 0
           Height = 5
-          Top = 280
-          Width = 573
+          Top = 275
+          Width = 571
           Align = alBottom
           ResizeAnchor = akBottom
         end
       end
       object SQLSheet: TTabSheet
         Caption = 'SQL'
-        ClientHeight = 389
-        ClientWidth = 573
+        ClientHeight = 384
+        ClientWidth = 571
         inline SQLEditor: TSynEdit
           Left = 0
           Height = 150
           Top = 26
-          Width = 573
+          Width = 571
           Align = alTop
           Font.Height = 13
           Font.Name = 'DejaVu Sans Mono'
@@ -196,7 +197,7 @@ object Main: TMain
           Gutter.Visible = False
           Gutter.Width = 0
           Gutter.MouseActions = <>
-          RightGutter.Width = 15
+          RightGutter.Width = 17
           RightGutter.MouseActions = <>
           Keystrokes = <          
             item
@@ -653,7 +654,7 @@ object Main: TMain
           end
           inline SynRightGutterPartList1: TSynRightGutterPartList
             object SynGutterLineNumber1: TSynGutterLineNumber
-              Width = 15
+              Width = 17
               MouseActions = <>
               MarkupInfo.Background = clBtnFace
               MarkupInfo.Foreground = clNone
@@ -669,7 +670,7 @@ object Main: TMain
           Left = 0
           Height = 5
           Top = 176
-          Width = 573
+          Width = 571
           Align = alTop
           Beveled = True
           ResizeAnchor = akTop
@@ -678,7 +679,7 @@ object Main: TMain
           Left = 0
           Height = 26
           Top = 0
-          Width = 573
+          Width = 571
           ButtonHeight = 22
           ButtonWidth = 22
           Caption = 'ToolBar2'
@@ -1320,8 +1321,8 @@ object Main: TMain
       TabOrder = 1
       object ChooseTable: TListBox
         Left = 0
-        Height = 405
-        Top = 12
+        Height = 379
+        Top = 38
         Width = 186
         Align = alClient
         ItemHeight = 0
@@ -1331,11 +1332,12 @@ object Main: TMain
         ScrollWidth = 184
         Style = lbOwnerDrawVariable
         TabOrder = 0
+        TopIndex = -1
       end
       object DBNameLabel: TLabel
         Left = 0
         Height = 1
-        Top = 0
+        Top = 26
         Width = 186
         Align = alTop
         ParentColor = False
@@ -1345,10 +1347,37 @@ object Main: TMain
       object Bevel1: TBevel
         Left = 0
         Height = 11
-        Top = 1
+        Top = 27
         Width = 186
         Align = alTop
         Shape = bsBottomLine
+      end
+      object ToolBar1: TToolBar
+        Left = 0
+        Height = 26
+        Top = 0
+        Width = 186
+        ButtonHeight = 24
+        ButtonWidth = 24
+        Caption = 'ToolBar1'
+        EdgeInner = esNone
+        EdgeOuter = esNone
+        Images = ImageList1
+        TabOrder = 1
+        object PrefsButton: TToolButton
+          Left = 1
+          Top = 0
+          Caption = 'Prefs'
+          ImageIndex = 17
+          OnClick = PrefsButtonClick
+        end
+        object AboutButton: TToolButton
+          Left = 25
+          Top = 0
+          Caption = 'AboutButton'
+          ImageIndex = 40
+          OnClick = AboutButtonClick
+        end
       end
     end
     object Splitter3: TSplitter

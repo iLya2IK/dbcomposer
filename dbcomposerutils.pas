@@ -21,9 +21,11 @@ uses
   Classes, SysUtils, kcThreadPool,
   Forms, Controls, Graphics,
   ExtCtrls, StdCtrls,
-  LCLType, LCLIntf,
+  LCLType, LCLIntf, LazMethodList, OGLFastNumList,
+  JSONPropStorage,
+  SynHighlighterSQLite3, SynEditHighlighter,
   ECommonObjs, OGLFastList,
-  dbComposerStruct,
+  dbComposerStruct, dbComposerCompleteHint,
   ExtSqlite3DS, ExtSqliteUtils, ExprSqlite3Funcs;
 
 type
@@ -181,15 +183,52 @@ type
     property Token[index : integer] : TNestedToken read GetToken; default;
   end;
 
+  TDBHelperState = (dbhsEditorFont, dbhsFormatSettings);
+
+  TDBHelperStateChanged = procedure (aState : TDBHelperState) of object;
+  PDBHelperStateChanged = ^TDBHelperStateChanged;
+
+  { TStateChanges }
+
+  TStateChanges = class(specialize TFastBaseNumericList <TDBHelperState>)
+  public
+    function  DoCompare(Item1, Item2 : Pointer) : Integer; override;
+    procedure Cummulate(St : TDBHelperState);
+  end;
+
+  { TSynAttrsDefs }
+
+  TSynAttrsDefs = class(TStringList)
+  public
+    procedure AddAttr(aAttr : TSynHighlighterAttributes);
+
+    function AttrByName(const aIndex : String) : TSynHighlighterAttributes;
+    function AttrByIndex(aIndex : Integer) : TSynHighlighterAttributes;
+  end;
+
   { TDBHelper }
 
   TDBHelper = class
   private
     FThreadPool : TThreadPool;
     FDBPath : TThreadUtf8String;
+    FSynSQL : TSynSQLite3Syn;
+    FAttrsDefs : TSynAttrsDefs;
+    FCummulation : TThreadInteger;
+    FCummulatedStates : TStateChanges;
+    fDefaultTokenVisStyles, fTokenVisStyles : TNestedTokenStyles;
+
+    FStateListeners : TMethodList;
+
+    FEditorFontName : String;
+    FEditorFontSize : Integer;
+
     function GetDBPath : String;
     function GetThreaded: Boolean;
     procedure SetDBPath(AValue : String);
+    procedure SetEditorFontName(AValue : String);
+    procedure SetEditorFontSize(AValue : Integer);
+    procedure SendStateChanged(aState : TDBHelperState);
   public
     JsonIndxClasses : TJsonCfgEnums;
     JsonIndxStringsStyles : TJsonCfgEnums;
@@ -205,15 +244,36 @@ type
 
   public
     constructor Create;
+    destructor Destroy; override;
 
     procedure DrawListItem(Control: TWinControl; Index: Integer;
                               ARect: TRect; State: TOwnerDrawState);
     procedure InitThreadPool(AThreadCnt : integer);
 
-    destructor Destroy; override;
+    function VersionStr : String;
+    function VersionMag : Word;
+    function VersionMin : Word;
+    function VersionNum : Cardinal;
+
+    procedure LoadFromConfig(aConfig : TJSONPropStorage);
+    procedure SaveToConfig(aConfig : TJSONPropStorage);
+
+    property Sqlite3AttrsDefs : TSynAttrsDefs read FAttrsDefs;
+    property Sqlite3Highlighter : TSynSQLite3Syn read FSynSQL;
+    property DefaultTokenVisStyles : TNestedTokenStyles read fDefaultTokenVisStyles;
+    property TokenVisStyles : TNestedTokenStyles read fTokenVisStyles;
+    procedure SetFontParamsFromCompletionObj(O : TCompletionObj; F : TFont; out
+      imi : integer);
     property ThreadPool : TThreadPool read FThreadPool write FThreadPool;
     property Threaded : Boolean read GetThreaded;
     property DBPath : String read GetDBPath write SetDBPath;
+
+    procedure AddStateListener(aEar : TDBHelperStateChanged);
+    procedure BeginUpdate;
+    procedure EndUpdate;
+
+    property EditorFontName : String read FEditorFontName write SetEditorFontName;
+    property EditorFontSize : Integer read FEditorFontSize write SetEditorFontSize;
   end;
 
 function NestedTokenVisStyle(C: TColor; S : TFontStyles) : TNestedTokenVisStyle;
@@ -231,7 +291,6 @@ const {$IFDEF UNIX}
 
 var
   DBHelper : TDBHelper;
-  vDefaultTokenVisStyles : TNestedTokenStyles;
 
 
 implementation
@@ -264,6 +323,41 @@ function NestedTokenVisStyle(C : TColor; S : TFontStyles
 begin
   Result.Color := C;
   Result.Style := S;
+end;
+
+{ TStateChanges }
+
+function TStateChanges.DoCompare({%H-}Item1, {%H-}Item2 : Pointer) : Integer;
+begin
+  Result := 0;
+end;
+
+procedure TStateChanges.Cummulate(St : TDBHelperState);
+begin
+  if IndexOf(St) < 0 then Add(St);
+end;
+
+{ TSynAttrsDefs }
+
+procedure TSynAttrsDefs.AddAttr(aAttr : TSynHighlighterAttributes);
+begin
+  AddObject(aAttr.Name, aAttr);
+end;
+
+function TSynAttrsDefs.AttrByName(const aIndex : String
+  ) : TSynHighlighterAttributes;
+var k : integer;
+begin
+  k := IndexOf(aIndex);
+  if k >=0 then
+    Result := TSynHighlighterAttributes(Objects[k]) else
+    Result := nil;
+end;
+
+function TSynAttrsDefs.AttrByIndex(aIndex : Integer
+  ) : TSynHighlighterAttributes;
+begin
+  Result := TSynHighlighterAttributes(Objects[aIndex]);
 end;
 
 { TJsonIndxStringsStyle }
@@ -696,6 +790,33 @@ begin
   FDBPath.Value := AValue;
 end;
 
+procedure TDBHelper.SetEditorFontName(AValue : String);
+begin
+  if FEditorFontName = AValue then Exit;
+  FEditorFontName := AValue;
+  SendStateChanged(dbhsEditorFont);
+end;
+
+procedure TDBHelper.SetEditorFontSize(AValue : Integer);
+begin
+  if FEditorFontSize = AValue then Exit;
+  FEditorFontSize := AValue;
+  SendStateChanged(dbhsEditorFont);
+end;
+
+procedure TDBHelper.SendStateChanged(aState : TDBHelperState);
+var i : integer;
+begin
+  if FCummulation.Value > 0 then
+  begin
+    for i := 0 to FStateListeners.Count-1 do
+    begin
+      TDBHelperStateChanged(FStateListeners[i])(aState);
+    end;
+  end else
+    FCummulatedStates.Cummulate(aState);
+end;
+
 function TDBHelper.GetJsonBlobKindEnum(aKind : TDBExtBlobKind) : TJsonCfgEnum;
 var i : integer;
 begin
@@ -744,7 +865,14 @@ begin
 end;
 
 constructor TDBHelper.Create;
+var i : integer;
+    Attr : TSynHighlighterAttributes;
+    st : TNestedTokenKind;
 begin
+  FStateListeners := TMethodList.Create;
+  FCummulatedStates := TStateChanges.Create;
+  FCummulation := TThreadInteger.Create(0);
+
   FDBPath := TThreadUtf8String.Create('');
 
   JsonIndxClasses := TJsonCfgEnums.Create;
@@ -776,6 +904,67 @@ begin
   JsonBlobKinds.AddNewField(JSON_CFG_TABLE, '');
   JsonBlobKinds.AddNewField(JSON_CFG_FIELD, '');
   JsonBlobKinds.AddNewField(JSON_CFG_PATH, cCURPATH);
+
+  {$ifdef Linux}
+  FEditorFontName := 'Monospace';
+  {$else}
+  {$ifdef Windows}
+  FEditorFontName := 'Courier New';
+  {$else}
+  FEditorFontName := 'monospace';
+  {$endif}
+  {$endif}
+  FEditorFontSize := -13;
+
+  FSynSQL := TSynSQLite3Syn.Create(nil);
+  FSynSQL.CommentAttri.Foreground := clGreen;
+  FSynSQL.CommentAttri.Style := [fsItalic];
+  FSynSQL.CommentAttri.InternalSaveDefaultValues;
+  FSynSQL.NumberAttri.Foreground := clNavy;
+  FSynSQL.NumberAttri.Style := [fsBold];
+  FSynSQL.NumberAttri.InternalSaveDefaultValues;
+  FSynSQL.SymbolAttri.Foreground := clRed;
+  FSynSQL.SymbolAttri.Style := [];
+  FSynSQL.SymbolAttri.InternalSaveDefaultValues;
+  FSynSQL.TableNameAttri.Foreground := clPurple;
+  FSynSQL.TableNameAttri.Style := [];
+  FSynSQL.TableNameAttri.InternalSaveDefaultValues;
+  FSynSQL.FieldNameAttri.Foreground := clFuchsia;
+  FSynSQL.FieldNameAttri.Style := [fsItalic];
+  FSynSQL.FieldNameAttri.InternalSaveDefaultValues;
+  FSynSQL.StringAttri.Foreground := clGreen;
+  FSynSQL.StringAttri.Style := [fsBold];
+  FSynSQL.StringAttri.InternalSaveDefaultValues;
+  FSynSQL.TableNames.Add('sqlite_master');
+  FSynSQL.Enabled := true;
+
+  FAttrsDefs := TSynAttrsDefs.Create;
+  FAttrsDefs.OwnsObjects := true;
+  for i := 0 to FSynSQL.AttrCount-1 do
+  begin
+    Attr := TSynHighlighterAttributes.Create(FSynSQL.Attribute[i].Name);
+    Attr.Assign(FSynSQL.Attribute[i]);
+    FAttrsDefs.AddAttr(Attr);
+  end;
+
+  fDefaultTokenVisStyles := TNestedTokenStyles.Create;
+  fDefaultTokenVisStyles[ntkNone]      := NestedTokenVisStyle(Sqlite3Highlighter.IdentifierAttri.Foreground,
+                                                             Sqlite3Highlighter.IdentifierAttri.Style);
+  fDefaultTokenVisStyles[ntkSymbol]    := NestedTokenVisStyle(Sqlite3Highlighter.SymbolAttri.Foreground,
+                                                             Sqlite3Highlighter.SymbolAttri.Style);
+  fDefaultTokenVisStyles[ntkTableName] := NestedTokenVisStyle(Sqlite3Highlighter.TableNameAttri.Foreground,
+                                                             Sqlite3Highlighter.TableNameAttri.Style);
+  fDefaultTokenVisStyles[ntkFieldName] := NestedTokenVisStyle(Sqlite3Highlighter.FieldNameAttri.Foreground,
+                                                             Sqlite3Highlighter.FieldNameAttri.Style);
+  fDefaultTokenVisStyles[ntkNumber]    := NestedTokenVisStyle(Sqlite3Highlighter.NumberAttri.Foreground,
+                                                             Sqlite3Highlighter.NumberAttri.Style);
+  fDefaultTokenVisStyles[ntkString]    := NestedTokenVisStyle(Sqlite3Highlighter.StringAttri.Foreground,
+                                                             Sqlite3Highlighter.StringAttri.Style);
+  fTokenVisStyles := TNestedTokenStyles.Create;
+  for st := Low(TNestedTokenKind) to High(TNestedTokenKind) do
+  begin
+    fTokenVisStyles[st] := fDefaultTokenVisStyles[st];
+  end;
 end;
 
 procedure TDBHelper.DrawListItem(Control : TWinControl; Index : Integer;
@@ -836,6 +1025,135 @@ begin
   FThreadPool.Running := true;
 end;
 
+function TDBHelper.VersionStr : String;
+begin
+  Result := IntToStr(VersionMag) + '.' +
+            IntToStr(VersionMin div 1000) + '.' +
+            IntToStr(VersionMin mod 1000);
+end;
+
+function TDBHelper.VersionMag : Word;
+begin
+  Result := 0;
+end;
+
+function TDBHelper.VersionMin : Word;
+begin
+  Result := 001001;
+end;
+
+function TDBHelper.VersionNum : Cardinal;
+begin
+  Result := VersionMag * 1000000 + VersionMin;
+end;
+
+const cBackground = 'Background';
+      cForeground = 'Foreground';
+      cStyle      = 'Style';
+      cFontName   = 'FontName';
+      cFontSize   = 'FontSize';
+
+procedure TDBHelper.LoadFromConfig(aConfig : TJSONPropStorage);
+var i : integer;
+    Attr : TSynHighlighterAttributes;
+begin
+  for i := 0 to FSynSQL.AttrCount-1 do
+  begin
+    Attr := FSynSQL.Attribute[i];
+    Attr.Background := aConfig.ReadInteger(Attr.Name + cBackground, Attr.Background) ;
+    Attr.Foreground := aConfig.ReadInteger(Attr.Name + cForeground, Attr.Foreground);
+    Attr.IntegerStyle := aConfig.ReadInteger(Attr.Name + cStyle, Attr.IntegerStyle);
+  end;
+  BeginUpdate;
+  try
+    EditorFontName := aConfig.ReadString(cFontName, FEditorFontName);
+    FEditorFontSize := aConfig.ReadInteger(cFontSize, FEditorFontSize);
+  finally
+    EndUpdate;
+  end;
+end;
+
+procedure TDBHelper.SaveToConfig(aConfig : TJSONPropStorage);
+var i : integer;
+    Attr : TSynHighlighterAttributes;
+begin
+  for i := 0 to FSynSQL.AttrCount-1 do
+  begin
+    Attr := FSynSQL.Attribute[i];
+    aConfig.WriteInteger(Attr.Name + cBackground, Attr.Background) ;
+    aConfig.WriteInteger(Attr.Name + cForeground, Attr.Foreground);
+    aConfig.WriteInteger(Attr.Name + cStyle, Attr.IntegerStyle) ;
+  end;
+  aConfig.WriteString(cFontName, FEditorFontName);
+  aConfig.WriteInteger(cFontSize, FEditorFontSize);
+end;
+
+procedure TDBHelper.SetFontParamsFromCompletionObj(O : TCompletionObj;
+  F : TFont; out imi : integer);
+var
+  Attr : TSynHighlighterAttributes;
+begin
+  attr := nil;
+  if Assigned(O) then
+  begin
+    case O.Kind of
+      sckKeyword : begin
+        Attr :=  FSynSQL.KeyAttri;
+        imi := IMG_CONFIG;
+      end;
+      sckFunction : begin
+        Attr :=  FSynSQL.FunctionAttri;
+        imi := IMG_STRUCT_ELEMENT;
+      end;
+      sckType : begin
+        Attr :=  FSynSQL.DataTypeAttri;
+        imi := IMG_DATA_TYPE;
+      end;
+      sckTable : begin
+        Attr :=  FSynSQL.TableNameAttri;
+        imi := IMG_TABLE;
+      end;
+      sckField : begin
+        Attr :=  FSynSQL.FieldNameAttri;
+        imi := IMG_STRUCT_ELEMENT;
+      end;
+    end;
+  end;
+  if Assigned(Attr) then
+  begin
+    F.Color := Attr.Foreground;
+    if (F.Color = clDefault) or (F.Color = clNone) then
+       F.Color := clBlack;
+    F.Style := Attr.Style;
+  end;
+end;
+
+procedure TDBHelper.AddStateListener(aEar : TDBHelperStateChanged);
+begin
+  FStateListeners.Add(TMethod(aEar));
+end;
+
+procedure TDBHelper.BeginUpdate;
+begin
+  FCummulation.Lock;
+  FCummulation.IncValue;
+end;
+
+procedure TDBHelper.EndUpdate;
+var i : integer;
+begin
+  FCummulation.DecValue;
+  if FCummulation.Value = 0 then
+  begin
+    for i := FCummulatedStates.Count-1 downto 0 do
+    begin
+      SendStateChanged(FCummulatedStates[i]);
+      FCummulatedStates.Delete(i);
+    end;
+  end;
+  FCummulation.UnLock;
+end;
+
 destructor TDBHelper.Destroy;
 begin
   if assigned(FThreadPool) then FreeAndNil( FThreadPool );
@@ -846,6 +1164,16 @@ begin
   JsonIndxStringsStyles.Free;
 
   FDBPath.Free;
+  FSynSQL.Free;
+
+  FStateListeners.Free;
+
+  FAttrsDefs.Free;
+  fDefaultTokenVisStyles.Free;
+  fTokenVisStyles.Free;
+
+  FCummulatedStates.Free;
+  FCummulation.Free;
 
   inherited Destroy;
 end;

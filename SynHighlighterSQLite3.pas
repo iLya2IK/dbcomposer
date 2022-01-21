@@ -11,9 +11,10 @@ uses
   SynHighlighterHashEntries;
 
 type
-  TtkTokenKind = (tkComment, tkDatatype, tkDefaultPackage, tkException,
-    tkFunction, tkIdentifier, tkKey, tkNull, tkNumber, tkSpace,
-    tkSQLPlus, tkString, tkSymbol, tkTableName, tkFieldName,
+  TtkTokenKind = (tkComment, tkDatatype, tkFunction, tkIdentifier, tkKey,
+    tkNull, tkNumber, tkSpace,
+    tkString, tkSymbol,
+    tkTableName, tkFieldName,
     tkUnknown, tkVariable);
 
   TRangeState = (rsUnknown, rsComment, rsString);
@@ -46,14 +47,11 @@ type
     fTableNames, fFieldNames: TStrings;
     fCommentAttri: TSynHighlighterAttributes;
     fDataTypeAttri: TSynHighlighterAttributes;
-    fDefaultPackageAttri: TSynHighlighterAttributes;
-    fExceptionAttri: TSynHighlighterAttributes;
     fFunctionAttri: TSynHighlighterAttributes;
     fIdentifierAttri: TSynHighlighterAttributes;
     fKeyAttri: TSynHighlighterAttributes;
     fNumberAttri: TSynHighlighterAttributes;
     fSpaceAttri: TSynHighlighterAttributes;
-    fSQLPlusAttri: TSynHighlighterAttributes;
     fStringAttri: TSynHighlighterAttributes;
     fSymbolAttri: TSynHighlighterAttributes;
     fTableNameAttri: TSynHighlighterAttributes;
@@ -123,10 +121,6 @@ type
       write fCommentAttri;
     property DataTypeAttri: TSynHighlighterAttributes read fDataTypeAttri
       write fDataTypeAttri;
-    property DefaultPackageAttri: TSynHighlighterAttributes
-      read fDefaultPackageAttri write fDefaultPackageAttri;
-    property ExceptionAttri: TSynHighlighterAttributes read fExceptionAttri
-      write fExceptionAttri;
     property FunctionAttri: TSynHighlighterAttributes read fFunctionAttri
       write fFunctionAttri;
     property IdentifierAttri: TSynHighlighterAttributes read fIdentifierAttri
@@ -136,8 +130,6 @@ type
       write fNumberAttri;
     property SpaceAttri: TSynHighlighterAttributes read fSpaceAttri
       write fSpaceAttri;
-    property SQLPlusAttri: TSynHighlighterAttributes read fSQLPlusAttri
-      write fSQLPlusAttri;
     property StringAttri: TSynHighlighterAttributes read fStringAttri
       write fStringAttri;
     property SymbolAttri: TSynHighlighterAttributes read fSymbolAttri
@@ -158,7 +150,10 @@ uses
   SynEditStrConst, ExtSqliteUtils;
 
 const
-SYNS_XML_AttrFieldName            =  'Field Name';
+ SYNS_XML_AttrFieldName            =  'Field Name';
+
+resourcestring
+ SYNS_AttrFieldName                =  'Field Name';
 
 var
   Identifiers: TIdentifierTable;
@@ -292,13 +287,6 @@ begin
   fDataTypeAttri := TSynHighlighterAttributes.Create(@SYNS_AttrDataType, SYNS_XML_AttrDataType);
   fDataTypeAttri.Style := [fsBold];
   AddAttribute(fDataTypeAttri);
-  fDefaultPackageAttri :=
-    TSynHighlighterAttributes.Create(@SYNS_AttrDefaultPackage, SYNS_XML_AttrDefaultPackage);
-  fDefaultPackageAttri.Style := [fsBold];
-  AddAttribute(fDefaultPackageAttri);
-  fExceptionAttri := TSynHighlighterAttributes.Create(@SYNS_AttrException, SYNS_XML_AttrException);
-  fExceptionAttri.Style := [fsItalic];
-  AddAttribute(fExceptionAttri);
   fFunctionAttri := TSynHighlighterAttributes.Create(@SYNS_AttrFunction, SYNS_XML_AttrFunction);
   fFunctionAttri.Style := [fsBold];
   AddAttribute(fFunctionAttri);
@@ -311,16 +299,13 @@ begin
   AddAttribute(fNumberAttri);
   fSpaceAttri := TSynHighlighterAttributes.Create(@SYNS_AttrSpace, SYNS_XML_AttrSpace);
   AddAttribute(fSpaceAttri);
-  fSQLPlusAttri:=TSynHighlighterAttributes.Create(@SYNS_AttrSQLPlus, SYNS_XML_AttrSQLPlus);
-  fSQLPlusAttri.Style := [fsBold];
-  AddAttribute(fSQLPlusAttri);
   fStringAttri := TSynHighlighterAttributes.Create(@SYNS_Attrstring, SYNS_XML_Attrstring);
   AddAttribute(fStringAttri);
   fSymbolAttri := TSynHighlighterAttributes.Create(@SYNS_AttrSymbol, SYNS_XML_AttrSymbol);
   AddAttribute(fSymbolAttri);
   fTableNameAttri := TSynHighlighterAttributes.Create(@SYNS_AttrTableName, SYNS_XML_AttrTableName);
   AddAttribute(fTableNameAttri);
-  fFieldNameAttri := TSynHighlighterAttributes.Create(@SYNS_AttrTableName, SYNS_XML_AttrFieldName);
+  fFieldNameAttri := TSynHighlighterAttributes.Create(@SYNS_AttrFieldName, SYNS_XML_AttrFieldName);
   AddAttribute(fFieldNameAttri);
   fVariableAttri := TSynHighlighterAttributes.Create(@SYNS_AttrVariable, SYNS_XML_AttrVariable);
   AddAttribute(fVariableAttri);
@@ -599,7 +584,7 @@ var
   tk: TtkTokenKind;
 begin
   tk := IdentKind(PChar(AKeyword));
-  Result := tk in [tkDatatype, tkException, tkFunction, tkKey,tkDefaultPackage];
+  Result := tk in [tkDatatype, tkFunction, tkKey];
 end;
 
 procedure TSynSQLite3Syn.Next;
@@ -667,14 +652,11 @@ begin
   case GetTokenID of
     tkComment: Result := fCommentAttri;
     tkDatatype: Result := fDataTypeAttri;
-    tkDefaultPackage: Result := fDefaultPackageAttri;
-    tkException: Result := fExceptionAttri;
     tkFunction: Result := fFunctionAttri;
     tkIdentifier: Result := fIdentifierAttri;
     tkKey: Result := fKeyAttri;
     tkNumber: Result := fNumberAttri;
     tkSpace: Result := fSpaceAttri;
-    tkSQLPlus: Result := fSQLPlusAttri;
     tkString: Result := fStringAttri;
     tkSymbol: Result := fSymbolAttri;
     tkTableName: Result := fTableNameAttri;

@@ -31,7 +31,7 @@ uses
   DB, DBComposerGrid, ExtSqlite3DS, ExprSqlite3Funcs,
   ExtSqliteUtils, ExtSqliteTokens, ExtSqliteSynCheck,
   SynEdit,
-  SynHighlighterSQLite3, SynEditHighlighter, SynCompletion,
+  SynEditHighlighter, SynCompletion,
   SynExportWordWrap,
   dbComposerTreeView,
   dbcomposertypes, dbComposerStruct, dbComposerUtils, dbComposerConsts,
@@ -89,6 +89,9 @@ type
     AppConfig : TJSONPropStorage;
     ChooseTable : TListBox;
     LogMemo : TMemo;
+    ToolBar1 : TToolBar;
+    PrefsButton : TToolButton;
+    AboutButton : TToolButton;
     WizardsMenu : TPopupMenu;
     StructInfo : TMemo;
     ModifToolBar : TToolBar;
@@ -133,6 +136,7 @@ type
     ToolButton6 : TToolButton;
     AddAndEditButton : TToolButton;
     CfgToolBarSep: TToolButton;
+    procedure AboutButtonClick(Sender : TObject);
     procedure ApplicationProperties1Exception(Sender : TObject; E : Exception);
     procedure ChooseTableDrawItem(Control: TWinControl; Index: Integer;
       ARect: TRect; State: TOwnerDrawState);
@@ -151,6 +155,7 @@ type
     procedure OpenCfgClick(Sender : TObject);
     procedure OpenDBClick(Sender : TObject);
     procedure MainPagesChange(Sender : TObject);
+    procedure PrefsButtonClick(Sender : TObject);
     procedure RefreshCfgClick(Sender : TObject);
     procedure ExecButtonClick(Sender : TObject);
     procedure ConfirmButtonClick(Sender : TObject);
@@ -174,8 +179,6 @@ type
     procedure ToolButton5Click(Sender : TObject);
     procedure AddAndEditButtonClick(Sender : TObject);
   private
-    FSynSQLSyn : TSynSQLite3Syn;
-
     FModTables : TDBControlStack;
     FStructureChanged : Boolean;
     FStructure : TDBStructure;
@@ -198,6 +201,8 @@ type
     Indxs : TIndxsCollection;
     DBGrid     : TDBExtGrid;
     LoggerExport : TSynExporterWordWrap;
+
+    procedure HelperChanged(aState : TDBHelperState);
 
     procedure SetDBFileName(const FN : String);
     procedure ReloadConfig(const FN: String);
@@ -270,11 +275,8 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure ConfigTreeSelectionChanged(Sender: TObject);
   public
-    procedure SetFontParamsFromCompletionObj(O : TCompletionObj; F : TFont; out
-      imi : integer);
     property ConfigChanged : Boolean read FConfigChanged write SetConfigChanged;
     property CompletionKeys : TCompletionCollection read FCompletionKeys;
-    property SynSQLSyn : TSynSQLite3Syn read FSynSQLSyn;
   end;
 
   { TConfigRec }
@@ -350,7 +352,7 @@ var
 
 implementation
 
-uses dbchooseid, dbComposerSQLEditor,
+uses dbchooseid, dbComposerSQLEditor, dbComposerAbout, dbComposerPreferences,
      dbcomposersynanalize,
      LazUTF8, Themes;
 
@@ -616,6 +618,12 @@ begin
   end;
 end;
 
+procedure TMain.PrefsButtonClick(Sender : TObject);
+begin
+  if ShowPreferences then
+    DBHelper.SaveToConfig(AppConfig);
+end;
+
 procedure TMain.RefreshCfgClick(Sender : TObject);
 begin
   if FileExists(FConfigFileName) then
@@ -634,6 +642,8 @@ begin
   Indxs := TIndxsCollection.Create;
 
   DBHelper.AppPath := ExtractFilePath(Application.ExeName);
+  DBHelper.AddStateListener(@HelperChanged);
+  DBHelper.LoadFromConfig(AppConfig);
   SaveDBDialog.InitialDir := DBHelper.AppPath;
   OpenDBDialog.InitialDir := DBHelper.AppPath;
   DataSet := TExtSqlite3Dataset.Create(nil);
@@ -650,24 +660,12 @@ begin
   FLogEnabled := TThreadBoolean.Create(true);
   FLogPull := TThreadStringList.Create;
 
-  FSynSQLSyn := TSynSQLite3Syn.Create(Self);
-  FSynSQLSyn.CommentAttri.Foreground := clGreen;
-  FSynSQLSyn.CommentAttri.Style := [fsItalic];
-  FSynSQLSyn.NumberAttri.Foreground := clNavy;
-  FSynSQLSyn.NumberAttri.Style := [fsBold];
-  FSynSQLSyn.SymbolAttri.Foreground := clRed;
-  FSynSQLSyn.SymbolAttri.Style := [];
-  FSynSQLSyn.TableNameAttri.Foreground := clPurple;
-  FSynSQLSyn.TableNameAttri.Style := [];
-  FSynSQLSyn.FieldNameAttri.Foreground := clFuchsia;
-  FSynSQLSyn.FieldNameAttri.Style := [fsItalic];
-  FSynSQLSyn.StringAttri.Foreground := clGreen;
-  FSynSQLSyn.StringAttri.Style := [fsBold];
-  FSynSQLSyn.TableNames.Add('sqlite_master');
-  FSynSQLSyn.Enabled := true;
-
-  SQLEditor.Highlighter := FSynSQLSyn;
-  SQLLog.Highlighter := FSynSQLSyn;
+  SQLEditor.Highlighter := DBHelper.Sqlite3Highlighter;
+  SQLEditor.Font.Name := DBHelper.EditorFontName;
+  SQLEditor.Font.Height := DBHelper.EditorFontSize;
+  SQLLog.Highlighter := DBHelper.Sqlite3Highlighter;
+  SQLLog.Font.Name := DBHelper.EditorFontName;
+  SQLLog.Font.Height := DBHelper.EditorFontSize;
 
   SL := TStringList.Create;
   try
@@ -700,15 +698,7 @@ begin
   ConfigTree.OnSelectionChanged := @ConfigTreeSelectionChanged;
   ConfigTree.RightClickSelect := true;
   ConfigTree.Parent := ConfigSheet;
-  {$ifdef Linux}
-  ConfigTree.Font.Name := 'Monospace';
-  {$else}
-  {$ifdef Windows}
-  ConfigTree.Font.Name := 'Courier New';
-  {$else}
-  ConfigTree.Font.Name := 'monospace';
-  {$endif}
-  {$endif}
+  ConfigTree.Font.Name := DBHelper.EditorFontName;
   ConfigTree.Font.Size := 10;
   SaveCfg.Enabled := false;
 
@@ -717,19 +707,6 @@ begin
   ReloadConfig(DBHelper.AppPath + AppConfig.ReadString(cfldDBName,
                                                      '..' + cSysDelimiter +
                                                             cDefaultDBName));
-  vDefaultTokenVisStyles := TNestedTokenStyles.Create;
-  vDefaultTokenVisStyles[ntkNone]      := NestedTokenVisStyle(FSynSQLSyn.IdentifierAttri.Foreground,
-                                                              FSynSQLSyn.IdentifierAttri.Style);
-  vDefaultTokenVisStyles[ntkSymbol]    := NestedTokenVisStyle(FSynSQLSyn.SymbolAttri.Foreground,
-                                                              FSynSQLSyn.SymbolAttri.Style);
-  vDefaultTokenVisStyles[ntkTableName] := NestedTokenVisStyle(FSynSQLSyn.TableNameAttri.Foreground,
-                                                              FSynSQLSyn.TableNameAttri.Style);
-  vDefaultTokenVisStyles[ntkFieldName] := NestedTokenVisStyle(FSynSQLSyn.FieldNameAttri.Foreground,
-                                                              FSynSQLSyn.FieldNameAttri.Style);
-  vDefaultTokenVisStyles[ntkNumber]    := NestedTokenVisStyle(FSynSQLSyn.NumberAttri.Foreground,
-                                                              FSynSQLSyn.NumberAttri.Style);
-  vDefaultTokenVisStyles[ntkString]    := NestedTokenVisStyle(FSynSQLSyn.StringAttri.Foreground,
-                                                              FSynSQLSyn.StringAttri.Style);
 
   DBGrid := TDBExtGrid.Create(SQLSheet);
   DBGrid.Top := Splitter1.Top + Splitter1.Height + 5;
@@ -740,13 +717,13 @@ begin
   DBGrid.Align := alClient;
 
   LoggerExport := TSynExporterWordWrap.Create(nil);
-  LoggerExport.Highlighter := FSynSQLSyn;
+  LoggerExport.Highlighter := DBHelper.Sqlite3Highlighter;
 
   CompleteHint := TCustomCompleteHint.Create(SQLSheet);
   CompleteHint.SynEdit := SQLEditor;
   CompleteHint.ImageList := ImageList1;
   CompleteHint.CompletionKeys := FCompletionKeys;
-  CompleteHint.OnSetFontParams := @SetFontParamsFromCompletionObj;
+  CompleteHint.OnSetFontParams := @(DBHelper.SetFontParamsFromCompletionObj);
   CompleteHint.Parent := SQLSheet;
 end;
 
@@ -758,6 +735,11 @@ begin
     LogMemo.Append(E.ToString);
   end else
     raise E;
+end;
+
+procedure TMain.AboutButtonClick(Sender : TObject);
+begin
+  AboutDlg.ShowModal;
 end;
 
 procedure TMain.ChooseTableDrawItem(Control: TWinControl; Index: Integer;
@@ -802,7 +784,7 @@ begin
     Pen.Style   := psSolid;
     Pen.Color   := Brush.Color;
 
-    Attr :=  FSynSQLSyn.TableNameAttri;
+    Attr :=  DBHelper.Sqlite3Highlighter.TableNameAttri;
     S := ChooseTable.Items[Index];
     if Assigned(Attr) then
     begin
@@ -923,10 +905,10 @@ end;
 procedure DrawNodeTextTableName(IsSelected: Boolean; NodeRect: TRect;
                              const S : String);
 begin
-  Sender.Canvas.Font.Style := vDefaultTokenVisStyles[ntkTableName].Style;
+  Sender.Canvas.Font.Style := DBHelper.TokenVisStyles[ntkTableName].Style;
   if IsSelected then
      Sender.Canvas.Font.Color := clWhite else
-     Sender.Canvas.Font.Color := vDefaultTokenVisStyles[ntkTableName].Color;
+     Sender.Canvas.Font.Color := DBHelper.TokenVisStyles[ntkTableName].Color;
 
   DrawNodeText(IsSelected, NodeRect, S);
 end;
@@ -953,26 +935,26 @@ begin
     begin
       case Expr[i].Kind of
         stkKeyWord :
-          Attr := FSynSQLSyn.KeyAttri;
+          Attr := DBHelper.Sqlite3Highlighter.KeyAttri;
         stkIdentifier :
-          Attr := FSynSQLSyn.IdentifierAttri;
+          Attr := DBHelper.Sqlite3Highlighter.IdentifierAttri;
         stkNumber :
-          Attr := FSynSQLSyn.NumberAttri;
+          Attr := DBHelper.Sqlite3Highlighter.NumberAttri;
         stkString :
-          Attr := FSynSQLSyn.StringAttri;
+          Attr := DBHelper.Sqlite3Highlighter.StringAttri;
         stkSymbol :
-          Attr := FSynSQLSyn.SymbolAttri;
+          Attr := DBHelper.Sqlite3Highlighter.SymbolAttri;
       else
          Attr := nil;
       end;
 
-      if Attr = FSynSQLSyn.IdentifierAttri then
+      if Attr = DBHelper.Sqlite3Highlighter.IdentifierAttri then
       begin
         if Assigned(FStructure) and
            Assigned(FStructure.ByName(Expr[i].Token)) then
         begin
-          Sender.Canvas.Font.Style := vDefaultTokenVisStyles[ntkTableName].Style;
-          Sender.Canvas.Font.Color := vDefaultTokenVisStyles[ntkTableName].Color;
+          Sender.Canvas.Font.Style := DBHelper.TokenVisStyles[ntkTableName].Style;
+          Sender.Canvas.Font.Color := DBHelper.TokenVisStyles[ntkTableName].Color;
         end
         else
         begin
@@ -2113,46 +2095,6 @@ begin
 
 end;
 
-procedure TMain.SetFontParamsFromCompletionObj(O : TCompletionObj;
-                                                 F : TFont; out imi : integer);
-var
-  Attr : TSynHighlighterAttributes;
-begin
-  attr := nil;
-  if Assigned(O) then
-  begin
-    case O.Kind of
-      sckKeyword : begin
-        Attr :=  FSynSQLSyn.KeyAttri;
-        imi := IMG_CONFIG;
-      end;
-      sckFunction : begin
-        Attr :=  FSynSQLSyn.FunctionAttri;
-        imi := IMG_STRUCT_ELEMENT;
-      end;
-      sckType : begin
-        Attr :=  FSynSQLSyn.DataTypeAttri;
-        imi := IMG_DATA_TYPE;
-      end;
-      sckTable : begin
-        Attr :=  FSynSQLSyn.TableNameAttri;
-        imi := IMG_TABLE;
-      end;
-      sckField : begin
-        Attr :=  FSynSQLSyn.FieldNameAttri;
-        imi := IMG_STRUCT_ELEMENT;
-      end;
-    end;
-  end;
-  if Assigned(Attr) then
-  begin
-    F.Color := Attr.Foreground;
-    if (F.Color = clDefault) or (F.Color = clNone) then
-       F.Color := clBlack;
-    F.Style := Attr.Style;
-  end;
-end;
-
 procedure TMain.LogEnabledCBChange(Sender: TObject);
 begin
   FLogEnabled.Value := LogEnabledCB.Checked;
@@ -2232,7 +2174,6 @@ begin
   FModTables.Free;
   DataSet.Free;
   FTableList.Free;
-  vDefaultTokenVisStyles.Free;
   FLogChanged.Free;
   FLogEnabled.Free;
   FLogPull.Free;
@@ -2649,7 +2590,7 @@ begin
 
     imi := -1;
     O := TCompletionObj(SynCompletion1.ItemList.Objects[Index]);
-    SetFontParamsFromCompletionObj(O, Font, imi);
+    DBHelper.SetFontParamsFromCompletionObj(O, Font, imi);
     if Assigned(O) then
       S := O.Value
     else
@@ -2880,6 +2821,16 @@ begin
   end;
 end;
 
+procedure TMain.HelperChanged(aState : TDBHelperState);
+begin
+  case aState of
+    dbhsEditorFont : begin
+      SQLEditor.Font.Name := DBHelper.EditorFontName;
+      SQLEditor.Font.Height := DBHelper.EditorFontSize;
+    end;
+  end;
+end;
+
 procedure TMain.SetDBFileName(const FN : String);
 begin
   if not SameText(FN, DataSet.FileName) then
@@ -2954,8 +2905,8 @@ begin
 
     FStructure.Clear;
     ChooseTable.Items.Clear;
-    FSynSQLSyn.TableNames.Clear;
-    FSynSQLSyn.FieldNames.Clear;
+    DBHelper.Sqlite3Highlighter.TableNames.Clear;
+    DBHelper.Sqlite3Highlighter.FieldNames.Clear;
     FTableList.Clear;
     DataSet.Active := false;
     SetDBFileName('');
@@ -3117,8 +3068,8 @@ begin
     Indxs.Clear;
     FTableList.Clear;
     ChooseTable.Items.Clear;
-    FSynSQLSyn.TableNames.Clear;
-    FSynSQLSyn.FieldNames.Clear;
+    DBHelper.Sqlite3Highlighter.TableNames.Clear;
+    DBHelper.Sqlite3Highlighter.FieldNames.Clear;
 
     DataSet.SQL := 'SELECT * FROM sqlite_master where type == ''table'' and name not like ''sqlite_%'';';
 
@@ -3172,7 +3123,7 @@ begin
     FStructure.UnLock;
   end;
   ChooseTable.Items.Assign(FTableList);
-  FSynSQLSyn.TableNames.Assign(FTableList);
+  DBHelper.Sqlite3Highlighter.TableNames.Assign(FTableList);
 
   try
     if Assigned(FConfig) then
@@ -3312,7 +3263,7 @@ begin
           SL.Add(FStructure[tn].DBField[i].FieldName);
         end;
       end;
-      FSynSQLSyn.FieldNames := SL;
+      DBHelper.Sqlite3Highlighter.FieldNames := SL;
     finally
       SL.Free;
     end;

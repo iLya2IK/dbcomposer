@@ -999,7 +999,8 @@ begin
           Break;
         end;
       end;
-      if k < 0 then Exit(false);
+      if k < 0 then
+        Exit(false);
       used[k] := false;
     end;
   end;

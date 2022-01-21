@@ -27,9 +27,10 @@ uses
   Forms, lazcontrols, dbcomposermain, dbchooseid, dbctypes, dbcomposertypes,
   dbcomposergrid, dbcomposerstruct, dbComposerUtils, dbComposerSQLEditor,
   dbComposerTreeView, dbComposerConsts, dbComposerCompleteHint,
+  dbComposerAbout,
   //wizards
   dbComposerWizards, dbComposerWizFixedList, dbComposerWizExtBlob,
-  dbComposerWizNewTable, dbComposerWizStrings;
+  dbComposerWizNewTable, dbComposerWizStrings, dbComposerPreferences;
 
 {$R *.res}
 
@@ -51,11 +52,12 @@ begin
   Application.CreateForm(TChooseIdDlg, ChooseIdDlg);
   Application.CreateForm(TEditSQLDialog, EditSQLDialog);
   Application.CreateForm(TWizNewTable, WizNewTable);
-  EditSQLDialog.SetSynHighlighter(Main.SynSQLSyn, @(Main.SetFontParamsFromCompletionObj));
   EditSQLDialog.SetCompletion(Main.SynCompletion1, Main.CompletionKeys);
   RegisterWizard(TDBWizExtBlob.Create);
   RegisterWizard(TDBWizFixedList.Create);
   RegisterWizard(TDBWizStrings.Create);
+  Application.CreateForm(TAboutDlg, AboutDlg);
+  Application.CreateForm(TPrefsDlg, PrefsDlg);
   Application.Run;
 end.
 

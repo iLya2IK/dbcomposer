@@ -77,7 +77,7 @@ begin
     end;
     Inc(i);
     T := FSynExpr[i];
-    if T.Kind <> stkSpace then begin
+    if not (T.Kind in [stkSpace, stkComment]) then begin
       Exit;
     end;
   end;
@@ -149,6 +149,7 @@ begin
         stkSpace :
          if Length(Result) > 0 then
            Result := Result + ' ';
+        stkComment : ;
       else begin
           Result := Result + T.QuotedToken;
         end;

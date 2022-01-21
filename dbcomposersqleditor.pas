@@ -25,7 +25,7 @@ uses
   dbComposerTreeView,
   OGLFastList,
   ExtSqliteUtils,  ExtSqlite3DS, ExtSqliteTokens,
-  dbComposerConsts, dbComposerCompleteHint,
+  dbComposerConsts, dbComposerCompleteHint, dbComposerUtils,
   SynEditKeyCmds, SynEditTypes, SynExportWordWrap;
 
 type
@@ -255,6 +255,7 @@ type
     procedure SetCurTableNode(AValue : TDBTreeElement);
     procedure SetExpr(AValue : String);
     function CharIndexToRowCol(ind : Integer) : TPoint;
+    procedure HelperChanged(aState : TDBHelperState);
   private
     TableTree : TDBComposerTreeView;
     Wrapper : TSynExporterWordWrap;
@@ -300,8 +301,6 @@ type
     property Expression : String read Expr write SetExpr;
     property CurTableNode : TDBTreeElement read FCurTableNode write SetCurTableNode;
   public
-    procedure SetSynHighlighter(SH : TSynCustomHighlighter;
-                                   aOnSetFontParams : TSetFontParams);
     procedure SetCompletion(SC : TSynCompletion;
                                aCompletionKeys : TCompletionCollection);
     property ResultExpr : String read Expr;
@@ -674,6 +673,16 @@ begin
   Result := Point(x + 1, y + 1);
 end;
 
+procedure TEditSQLDialog.HelperChanged(aState : TDBHelperState);
+begin
+  case aState of
+    dbhsEditorFont : begin
+      SynEdit1.Font.Name := DBHelper.EditorFontName;
+      SynEdit1.Font.Height := DBHelper.EditorFontSize;
+    end;
+  end;
+end;
+
 function TEditSQLDialog.Start(const aExpr : String; aOptions : TEditSQLOptions
   ) : Boolean;
 var SL : TStringList;
@@ -849,6 +858,15 @@ begin
   CompleteHint.Parent := Panel3;
 
   Wrapper := TSynExporterWordWrap.Create(nil);
+
+  SynEdit1.Highlighter := DBHelper.Sqlite3Highlighter;
+  CompleteHint.OnSetFontParams := @(DBHelper.SetFontParamsFromCompletionObj);
+  Wrapper.Highlighter := DBHelper.Sqlite3Highlighter;
+
+  DBHelper.AddStateListener(@HelperChanged);
+
+  SynEdit1.Font.Name := DBHelper.EditorFontName;
+  SynEdit1.Font.Height := DBHelper.EditorFontSize;
 end;
 
 procedure TEditSQLDialog.FormClose(Sender : TObject;
@@ -1527,14 +1545,6 @@ begin
   begin
     SetButtonState(false, true);
   end;
-end;
-
-procedure TEditSQLDialog.SetSynHighlighter(SH : TSynCustomHighlighter;
-  aOnSetFontParams : TSetFontParams);
-begin
-  SynEdit1.Highlighter := SH;
-  CompleteHint.OnSetFontParams := aOnSetFontParams;
-  Wrapper.Highlighter := SH;
 end;
 
 procedure TEditSQLDialog.SetCompletion(SC : TSynCompletion;
