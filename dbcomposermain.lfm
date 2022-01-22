@@ -1,10 +1,10 @@
 object Main: TMain
   Left = 571
-  Height = 554
-  Top = 114
+  Height = 553
+  Top = 115
   Width = 774
   Caption = 'DB Composer'
-  ClientHeight = 554
+  ClientHeight = 553
   ClientWidth = 774
   OnClose = FormClose
   OnCreate = FormCreate
@@ -16,7 +16,7 @@ object Main: TMain
   object LogMemo: TMemo
     Left = 0
     Height = 130
-    Top = 424
+    Top = 423
     Width = 774
     Align = alBottom
     ReadOnly = True
@@ -27,7 +27,7 @@ object Main: TMain
     Cursor = crVSplit
     Left = 0
     Height = 5
-    Top = 419
+    Top = 418
     Width = 774
     Align = alBottom
     Beveled = True
@@ -35,18 +35,18 @@ object Main: TMain
   end
   object Panel1: TPanel
     Left = 0
-    Height = 419
+    Height = 418
     Top = 0
     Width = 774
     Align = alClient
     BevelOuter = bvLowered
     Caption = 'Panel1'
-    ClientHeight = 419
+    ClientHeight = 418
     ClientWidth = 774
     TabOrder = 2
     object MainPages: TPageControl
       Left = 192
-      Height = 417
+      Height = 416
       Top = 1
       Width = 581
       ActivePage = ConfigSheet
@@ -58,7 +58,7 @@ object Main: TMain
       Options = [nboDoChangeOnSetIndex]
       object ConfigSheet: TTabSheet
         Caption = 'Config'
-        ClientHeight = 389
+        ClientHeight = 388
         ClientWidth = 573
         object ToolBar3: TToolBar
           Left = 0
@@ -142,7 +142,7 @@ object Main: TMain
         object StructPanel: TPanel
           Left = 0
           Height = 104
-          Top = 285
+          Top = 284
           Width = 573
           Align = alBottom
           BevelOuter = bvLowered
@@ -171,7 +171,7 @@ object Main: TMain
           Cursor = crVSplit
           Left = 0
           Height = 5
-          Top = 280
+          Top = 279
           Width = 573
           Align = alBottom
           ResizeAnchor = akBottom
@@ -714,13 +714,13 @@ object Main: TMain
       end
       object ModSheet: TTabSheet
         Caption = 'Modification'
-        ClientHeight = 384
-        ClientWidth = 571
+        ClientHeight = 388
+        ClientWidth = 573
         object ScrollBox1: TScrollBox
           Left = 2
-          Height = 331
+          Height = 335
           Top = 51
-          Width = 567
+          Width = 569
           HorzScrollBar.Page = 1
           VertScrollBar.Page = 1
           Align = alClient
@@ -731,7 +731,7 @@ object Main: TMain
           Left = 0
           Height = 26
           Top = 23
-          Width = 571
+          Width = 573
           ButtonHeight = 23
           ButtonWidth = 23
           EdgeBorders = []
@@ -767,7 +767,7 @@ object Main: TMain
           end
           object ToolButton6: TToolButton
             Left = 70
-            Height = 8
+            Height = 23
             Top = 0
             Caption = 'ToolButton6'
             Style = tbsSeparator
@@ -785,7 +785,7 @@ object Main: TMain
           Left = 0
           Height = 23
           Top = 0
-          Width = 571
+          Width = 573
           DragReorder = False
           Images = ImageList1
           Sections = <>
@@ -1311,18 +1311,19 @@ object Main: TMain
     end
     object Panel2: TPanel
       Left = 1
-      Height = 417
+      Height = 416
       Top = 1
       Width = 186
       Align = alLeft
       BevelOuter = bvNone
-      ClientHeight = 417
+      ClientHeight = 416
       ClientWidth = 186
       TabOrder = 1
+      OnClick = Panel2Click
       object ChooseTable: TListBox
         Left = 0
-        Height = 379
-        Top = 38
+        Height = 366
+        Top = 50
         Width = 186
         Align = alClient
         ItemHeight = 0
@@ -1332,24 +1333,6 @@ object Main: TMain
         ScrollWidth = 184
         Style = lbOwnerDrawVariable
         TabOrder = 0
-      end
-      object DBNameLabel: TLabel
-        Left = 0
-        Height = 1
-        Top = 26
-        Width = 186
-        Align = alTop
-        ParentColor = False
-        ParentShowHint = False
-        ShowHint = True
-      end
-      object Bevel1: TBevel
-        Left = 0
-        Height = 11
-        Top = 27
-        Width = 186
-        Align = alTop
-        Shape = bsBottomLine
       end
       object ToolBar1: TToolBar
         Left = 0
@@ -1378,10 +1361,39 @@ object Main: TMain
           OnClick = AboutButtonClick
         end
       end
+      object Panel3: TPanel
+        Left = 0
+        Height = 24
+        Top = 26
+        Width = 186
+        Align = alTop
+        BevelOuter = bvLowered
+        ClientHeight = 24
+        ClientWidth = 186
+        Color = clActiveCaption
+        ParentColor = False
+        TabOrder = 2
+        object DBNameLabel: TLabel
+          Left = 1
+          Height = 22
+          Top = 1
+          Width = 184
+          Align = alClient
+          Alignment = taCenter
+          Color = clActiveCaption
+          Font.Color = clCaptionText
+          Layout = tlCenter
+          ParentColor = False
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          Transparent = False
+        end
+      end
     end
     object Splitter3: TSplitter
       Left = 187
-      Height = 417
+      Height = 416
       Top = 1
       Width = 5
     end

@@ -433,7 +433,7 @@ begin
     s2 := Request.WhereExpr;
 
     s := 'select ' + Request.SelectQuotedTable + '.' + Request.SelectQuotedId + ', ' +
-                   Request.SelectExpr + ' from ' + Request.NestedTables;
+                   Request.SelectExpr + ' from ' + Request.NestedTablesListed;
 
     if (length(Filter) + Length(S2)) > 0 then
     begin

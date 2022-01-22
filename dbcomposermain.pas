@@ -81,7 +81,6 @@ type
 
   TMain = class(TForm)
     ApplicationProperties1 : TApplicationProperties;
-    Bevel1: TBevel;
     DBNameLabel: TLabel;
     LogEnabledCB: TCheckBox;
     HeaderControl1 : THeaderControl;
@@ -89,6 +88,7 @@ type
     AppConfig : TJSONPropStorage;
     ChooseTable : TListBox;
     LogMemo : TMemo;
+    Panel3: TPanel;
     ToolBar1 : TToolBar;
     PrefsButton : TToolButton;
     AboutButton : TToolButton;
@@ -155,6 +155,7 @@ type
     procedure OpenCfgClick(Sender : TObject);
     procedure OpenDBClick(Sender : TObject);
     procedure MainPagesChange(Sender : TObject);
+    procedure Panel2Click(Sender: TObject);
     procedure PrefsButtonClick(Sender : TObject);
     procedure RefreshCfgClick(Sender : TObject);
     procedure ExecButtonClick(Sender : TObject);
@@ -616,6 +617,11 @@ begin
   begin
     ChooseTable.ItemIndex := ChooseTable.Items.IndexOf(DBGrid.CurSelectedTable);
   end;
+end;
+
+procedure TMain.Panel2Click(Sender: TObject);
+begin
+
 end;
 
 procedure TMain.PrefsButtonClick(Sender : TObject);
@@ -3380,6 +3386,14 @@ begin
     end;
   end;
   ConfigTree.EndUpdate;
+  if Assigned(FConfig) and (ConfigTree.Items.Count > 0) then
+  begin
+    ConfigTree.Items[0].Expand(false);
+    if Assigned(FConfig) and Assigned(FCfgStructNode) then
+    begin
+      FCfgStructNode.Expand(false);
+    end;
+  end;
 end;
 
 procedure TMain.UpdateCfgStruct(fromind : integer);

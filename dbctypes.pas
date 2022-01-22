@@ -140,7 +140,8 @@ type
     procedure Clear;
 
     property WhereExpr : String read GetWhereExpr;
-    property NestedTables : String read GetNestedTables;
+    property NestedTables : TNestedTablesList read FNestedTables;
+    property NestedTablesListed : String read GetNestedTables;
     property ListOfFields : String read GetListOfFielda;
     property SelectTable  : String read FSelectTable;
     property SelectId  : String read FSelectId;
@@ -513,7 +514,7 @@ end;
 
 function TSQLRequest.IsEmpty : Boolean;
 begin
-  Result := (Length(NestedTables) = 0 ) and
+  Result := (Length(NestedTablesListed) = 0 ) and
             (Length(SelectExpr  ) = 0 ) and
             (Length(SelectId    ) = 0 ) and
             (Length(SelectTable ) = 0 ) and

@@ -967,7 +967,7 @@ begin
   GetNestedExpr(Req.SelectExprLst, S);
   Result := 'select ' + aTable.QuotedName + '.' + sqluQuotedIdIfNeeded(Key) + ', ''' +
             aTable.QuotedName + '::' + S + ''' from ';
-  Result := Result + Req.NestedTables;
+  Result := Result + Req.NestedTablesListed;
   S2 := Req.WhereExpr;
   if length(S2) > 0 then
      Result := Result + ' where ' + S2 + ' group by ' +

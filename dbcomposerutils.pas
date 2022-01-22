@@ -312,7 +312,16 @@ begin
       TN := Expr[0].QuotedToken;
       FN := Expr[2].QuotedToken;
       Result := true;
-    end else begin
+    end else
+    if (Expr.Count = 1) and
+       (Expr[0].Kind = stkIdentifier) and
+       (Expr[0].IdCnt = 2) then
+    begin
+      TN := Expr[0].SubToken[0].QuotedToken;
+      FN := Expr[0].SubToken[1].QuotedToken;
+      Result := true;
+    end else
+    begin
       TN := '';
       FN := '';
       Result := false;
