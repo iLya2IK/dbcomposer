@@ -29,6 +29,7 @@
 *.zip
 *.7z
 *.png
+!screenshots/*.png
 *.trc
 dbcomposer
 link*.res
