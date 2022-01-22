@@ -66,7 +66,8 @@ type
 
     procedure ExecuteSQL(const S : String);
     procedure ExecuteTable(const TN : String);
-    procedure ExecuteSQLExpr(Request: TSQLRequest; const Filter, GroupBy: String);
+    procedure ExecuteSQLExpr(Request: TSQLRequest; const Filter: String;
+      GroupBy: Boolean);
     procedure ClearGrid;
 
     property DataSet : TExtSqlite3Dataset read FDataSet write SetDataSet;
@@ -422,8 +423,9 @@ begin
   end;
 end;
 
-procedure TDBExtGrid.ExecuteSQLExpr(Request: TSQLRequest; const Filter,
-  GroupBy: String);
+procedure TDBExtGrid.ExecuteSQLExpr(Request: TSQLRequest;
+  const Filter : String;
+  GroupBy: Boolean);
 var s, s2 : String;
 begin
   if not assigned(FDataSet) then Exit;
@@ -448,12 +450,18 @@ begin
         S := S + '(' + Filter + ')';
     end;
 
-    if Length(GroupBy) > 0 then
+    if GroupBy then
+    begin
       S := S + ' group by ' + Request.SelectQuotedTable + '.' + Request.SelectQuotedId;
+      FCurSelectedTable := Request.SelectTable;
+      if Assigned(FDB) then
+        FTable := FDB.ByName(FCurSelectedTable) else
+        FTable := nil;
+    end else
+      FCurSelectedTable := cGenericTable;
 
     FDataSet.Close;
     FDataSet.SQL := S;
-    FCurSelectedTable := cGenericTable;
     FIdTable := Request.SelectTable;
     Execute;
   finally

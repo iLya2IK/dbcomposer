@@ -226,8 +226,7 @@ begin
   begin
     FNeedUpdate := false;
 
-    SG.ExecuteSQLExpr(Request, Filter,
-                               Request.SelectTable + '.' + Request.SelectId);
+    SG.ExecuteSQLExpr(Request, Filter, true);
 
     if SG.RowCount > 1 then
     begin

@@ -275,7 +275,7 @@ begin
     begin
       if jArr[i] Is TJSONObject then
       begin
-        if Find(JSON_CFG_UID, uid) then
+        if TJSONObject(jArr[i]).Find(JSON_CFG_UID, uid) then
         begin
           if Result = uid.AsInteger then
           begin

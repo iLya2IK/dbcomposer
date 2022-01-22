@@ -1563,7 +1563,7 @@ begin
   FValuesLocker.Lock;
   try
     Result := TDBExtBlobValue(FPathValues.Values[aPath]);
-    if Id >= 0 then Vid := GetHolderById(Id);
+    if Id >= 0 then Vid := GetHolderById(Id) else Vid := nil;
 
     if assigned(Result) then begin
        if assigned(Vid) then
@@ -1731,9 +1731,9 @@ end;
 function TDBExtBlobImageValue.DoLoad : Boolean;
 begin
   try
-    if FileExists(Path) then
+    if FileExists(FullPath) then
     begin
-      FBitmap.LoadFromFile(Path);
+      FBitmap.LoadFromFile(FullPath);
       Result := true;
     end else begin
       Result := false;

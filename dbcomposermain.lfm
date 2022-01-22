@@ -767,7 +767,7 @@ object Main: TMain
           end
           object ToolButton6: TToolButton
             Left = 70
-            Height = 23
+            Height = 8
             Top = 0
             Caption = 'ToolButton6'
             Style = tbsSeparator

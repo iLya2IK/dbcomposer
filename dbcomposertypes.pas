@@ -28,6 +28,15 @@ uses
   dbComposerStruct, dbComposerUtils;
 
 type
+
+ { TLimitedText }
+
+ TLimitedText = class(TSqlite3Function)
+ public
+   constructor Create; overload;
+   procedure ScalarFunc(argc : integer); override;
+ end;
+
  TDBControls = class;
  TDBControlStack = class;
 
@@ -291,6 +300,30 @@ const ChooseBitBtn   = 'ChooseId';
       TimeStampField = 'TimeStampField';
       ExtImageField  = 'ExtImageField';
       ChooseImageField = 'ChooseImageField';
+
+{ TLimitedText }
+
+constructor TLimitedText.Create;
+begin
+  inherited Create('limtext', 1, sqlteUtf8, sqlfScalar);
+end;
+
+procedure TLimitedText.ScalarFunc(argc: integer);
+var S : String; L : Integer;
+begin
+  if argc = 1 then
+  begin
+    S := AsString(0);
+    L := UTF8Length(S);
+    if (L > 20) then
+    begin
+      S := UTF8Copy(S, 1, 17) + '...';
+    end;
+    S := UTF8StringReplace(S, '''', '''''', [rfReplaceAll]);
+    SetResult(S);
+  end else
+    SetResultNil;
+end;
 
 { TDBControlFillJob }
 
@@ -930,7 +963,7 @@ function TDBControl.GenNestedSQLRequest(Req : TSQLRequest; aTable : TDBTable;
   const Key : String) : String;
 
 procedure GetNestedExpr(lst : TSelectNestedList; var S : String);
-const aStrString = '''''''''||replace(iif(length(%s)>20, substr(%s,1,17)||''...'', %s),'''''''','''''''''''')||''''''''';
+const aStrString = '''''''''||limtext(%s)||''''''''';
 var
   i : integer;
   FFN : String;
@@ -954,7 +987,7 @@ begin
       FFN := lst[i].Table + '.' + lst[i].Field;
       S := S + '''||';
       if lst[i].FieldType in [ftString, ftMemo] then
-        S := S + Format(aStrString, [FFN, FFN, FFN]) else
+        S := S + Format(aStrString, [FFN]) else
         S := S + FFN;
       S := S + '||''';
     end;

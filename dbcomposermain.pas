@@ -921,7 +921,7 @@ end;
 
 procedure DrawNodeText(IsSelected: Boolean; NodeRect: TRect; cfgRec: TJSONSqliteExpr);
 var
-  Details: TThemedElementDetails;
+ // Details: TThemedElementDetails;
   Expr : TSqliteExpr;
   i : integer;
   S : String;
@@ -933,7 +933,7 @@ begin
     Sender.Canvas.FillRect(NodeRect);
   end;
 
-  Details := ThemeServices.GetElementDetails(ttTreeviewDontCare);
+ // Details := ThemeServices.GetElementDetails(ttTreeviewDontCare);
 
   Expr := cfgRec.Expr;
   try
@@ -987,12 +987,12 @@ begin
       end;
       if IsSelected then Sender.Canvas.Font.Color := clWhite;
       NodeRect.Right := NodeRect.Left + Sender.Canvas.TextWidth(S);
-      if (tvoThemedDraw in Sender.Options) then
+      {if (tvoThemedDraw in Sender.Options) then
         ThemeServices.DrawText(Sender.Canvas, Details, S, NodeRect, DT_LEFT or
                                                               DT_VCENTER or
                                                               DT_SINGLELINE or
                                                               DT_NOPREFIX, 0)
-      else
+      else }
         DrawText(Sender.Canvas.Handle, PChar(S), -1, NodeRect, DT_LEFT or
                                                          DT_VCENTER or
                                                          DT_SINGLELINE or
@@ -3045,6 +3045,7 @@ begin
       InitializeDb else
       RefreshDbFromConfig;
     DataSet.Active := act;
+    DataSet.AddFunction(TLimitedText.Create);
 
     GenerateStructure;
   end;
@@ -3157,11 +3158,17 @@ begin
             begin
               kfield := UTF8StringReplace(kfield, cCURPATH, DBHelper.AppPath, [rfReplaceAll]);
               kfield := UTF8StringReplace(kfield, cDBPATH,  DBHelper.DBPath, [rfReplaceAll]);
-              if Length(kfield) = 0 then kfield := DBHelper.AppPath;
+              kfield := UTF8StringReplace(kfield, cNonSysDelimiter, cSysDelimiter, [rfReplaceAll]);
+              kfield := UTF8StringReplace(kfield, cSysDelimiter+cSysDelimiter, cSysDelimiter, [rfReplaceAll]);
+              if Length(kfield) = 0 then kfield := DBHelper.AppPath else
+              begin
+                if kfield[Length(kfield)] <> cSysDelimiter then
+                  kfield := kfield + cSysDelimiter;
+              end;
 
               T := FStructure.ByName(tblname);
               if Assigned(T) and
-                 Assigned(T.ByName(vfield)) and Assigned(T.ByName(kfield)) then
+                 Assigned(T.ByName(vfield)) then
               begin
                 FStructure.AddNewExtBlob(TJsonBlobKind(DBHelper.JsonBlobKinds[k]).Kind,
                                          kfield, tblname, vfield,
