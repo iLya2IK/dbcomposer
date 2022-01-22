@@ -107,6 +107,7 @@ type
   public
     function IndexOf(const Tn, AsExpr : String) : Integer;
     function Add(const Tn, AsExpr : String) : TNestedTable; overload;
+    procedure Assign(O : TNestedTablesList);
   end;
 
   { TSQLRequest }
@@ -175,6 +176,17 @@ begin
   Result.Table := Tn;
   Result.AsName := AsExpr;
   Add(Result);
+end;
+
+procedure TNestedTablesList.Assign(O: TNestedTablesList);
+var i : integer;
+begin
+  if not Assigned(O) then Exit;
+
+  for i := 0 to O.Count-1 do
+  begin
+    Add(O[i].Table, O[i].AsName);
+  end;
 end;
 
 { TNestedTable }

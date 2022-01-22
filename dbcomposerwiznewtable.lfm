@@ -52,31 +52,29 @@ object WizNewTable: TWizNewTable
       Left = 0
       Height = 50
       Top = 0
-      Width = 41
+      Width = 80
       Align = alLeft
-      AutoSize = True
       Caption = 'Ok'
       Images = Main.ImageList1
       ImageIndex = 13
       OnClick = SpeedButton2Click
     end
     object SpeedButton3: TSpeedButton
-      Left = 41
+      Left = 80
       Height = 50
       Top = 0
-      Width = 64
+      Width = 80
       Align = alLeft
-      AutoSize = True
       Caption = 'Cancel'
       Images = Main.ImageList1
       ImageIndex = 11
       OnClick = SpeedButton3Click
     end
     object Label1: TLabel
-      Left = 105
+      Left = 160
       Height = 50
       Top = 0
-      Width = 267
+      Width = 212
       Align = alClient
       AutoSize = False
       ParentColor = False

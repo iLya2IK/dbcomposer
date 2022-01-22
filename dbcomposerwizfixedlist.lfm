@@ -7,6 +7,7 @@ object WizFixedList: TWizFixedList
   Caption = 'WizFixedList'
   ClientHeight = 390
   ClientWidth = 451
+  Position = poMainFormCenter
   LCLVersion = '2.0.12.0'
   object Panel1: TPanel
     Left = 4
@@ -81,31 +82,29 @@ object WizFixedList: TWizFixedList
       Left = 0
       Height = 50
       Top = 0
-      Width = 41
+      Width = 80
       Align = alLeft
-      AutoSize = True
       Caption = 'Ok'
       Images = Main.ImageList1
       ImageIndex = 13
       OnClick = SpeedButton2Click
     end
     object SpeedButton3: TSpeedButton
-      Left = 41
+      Left = 80
       Height = 50
       Top = 0
-      Width = 64
+      Width = 80
       Align = alLeft
-      AutoSize = True
       Caption = 'Cancel'
       Images = Main.ImageList1
       ImageIndex = 11
       OnClick = SpeedButton3Click
     end
     object Label1: TLabel
-      Left = 105
+      Left = 160
       Height = 50
       Top = 0
-      Width = 338
+      Width = 283
       Align = alClient
       AutoSize = False
       ParentColor = False
@@ -134,7 +133,6 @@ object WizFixedList: TWizFixedList
       ScrollWidth = 441
       Style = lbOwnerDrawFixed
       TabOrder = 0
-      TopIndex = -1
     end
     object ToolBar1: TToolBar
       Left = 0
@@ -185,9 +183,9 @@ object WizFixedList: TWizFixedList
       end
       object CheckBox1: TCheckBox
         Left = 105
-        Height = 23
+        Height = 19
         Top = 0
-        Width = 152
+        Width = 127
         Caption = 'Numerate from zero'
         OnChange = CheckBox1Change
         TabOrder = 0
