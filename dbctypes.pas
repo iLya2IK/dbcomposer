@@ -49,56 +49,53 @@ type
     property Element[index : integer] : TRequestCompElement read GetElement; default;
   end;
 
+  { TNestedTable }
+
+  TNestedTable = class
+  public
+    Table  : String;  // the real original table name in database
+    AsName : String;  // the fake name of table
+    function ToSqlExpr : String;
+    function QuotedIdName : String;
+  end;
+
   { TSelectNestedList }
 
   TSelectNestedList = class(TFastCollection)
   private
-    FTable     : String;
-    FOrigTable : String;
+    FTable     : TNestedTable;
     FField     : String;
     FAsField   : String;
     FAsFieldToken,
       FAsTableToken : String;
     FType      : TFieldType;
+    function GetOrigTable : String;
+    function GetTable : String;
     procedure SetAsField(const AFN : String);
     function GetElement(index : integer) : TSelectNestedList;
   public
-    constructor Create(const aOrigTable, aTable, aField : String;
+    constructor Create(aTable : TNestedTable; const aField : String;
                 aFieldType : TFieldType); overload;
-    constructor Create(const aOrigTable, aTable, aField : String;
+    constructor Create(aTable : TNestedTable; const aField : String;
                 aFieldType : TFieldType; const aAsFieldName : String); overload;
-    constructor Create(const aTable, aField : String;
-                             aFieldType : TFieldType); overload;
     constructor Create(O : TSelectNestedList); overload;
     procedure Assign(O : TSelectNestedList);
     function GetExpr(WithPaths : Boolean) : String;
     function GetFields : String;
-    function AddNewNestedField(const aTable, aField : String;
+    function AddNewNestedField(aTable : TNestedTable; const aField : String;
       aFieldType : TFieldType) : TSelectNestedList;  overload;
-    function AddNewNestedField(const aOrigTable, aTable, aField : String;
-      aFieldType : TFieldType) : TSelectNestedList;  overload;
-    function AddNewNestedField(const aOrigTable, aTable, aField : String;
+    function AddNewNestedField(aTable : TNestedTable; const aField : String;
       aFieldType : TFieldType;
       const aAsFieldName : String) : TSelectNestedList;  overload;
     function CheckFieldName(const AFieldName : String) : Boolean;
     function GenOrigFieldName(const ATableName, AFieldName : String) : String;
     property Element[index : integer] : TSelectNestedList read GetElement; default;
-    property OrigTable : String read FOrigTable;
-    property Table : String read FTable;
+    property OrigTable : String read GetOrigTable;
+    property Table : String read GetTable;
     property Field : String read FField;
     property AsFieldName : String read FAsFieldToken;
     property AsFieldTable : String read FAsTableToken;
     property FieldType : TFieldType read FType;
-  end;
-
-  { TNestedTable }
-
-  TNestedTable = class
-  public
-    Table  : String;
-    AsName : String;
-    function ToSqlExpr : String;
-    function IdName : String;
   end;
 
   { TNestedTablesList }
@@ -130,7 +127,7 @@ type
     constructor Create(const ST, SF : String); overload;
     destructor Destroy; override;
 
-    function AddNewNestedField(const aTable, aField : String;
+    function AddNewNestedField(aTable : TNestedTable; const aField : String;
       aFieldType : TFieldType) : TSelectNestedList;
     function AddNewCompValue(const LS, OP, RS : String) : TRequestCompElement;
     function AddNewNestedTable(const TN : String) : TNestedTable;
@@ -198,7 +195,7 @@ begin
     Result := sqluQuotedIdIfNeeded(Table);
 end;
 
-function TNestedTable.IdName : String;
+function TNestedTable.QuotedIdName : String;
 begin
   if Length(AsName) > 0 then Result := AsName else Result := Table;
   Result := sqluQuotedIdIfNeeded(Result);
@@ -262,48 +259,51 @@ begin
   Result := TSelectNestedList(Item[index]);
 end;
 
+constructor TSelectNestedList.Create(aTable : TNestedTable;
+  const aField : String; aFieldType : TFieldType);
+begin
+  inherited Create;
+  FTable := aTable;
+  FField := aField;
+  FType := aFieldType;
+  if Assigned(FTable) then
+    SetAsField(FTable.QuotedIdName + '.' + FField) else
+    SetAsField('');
+end;
+
+constructor TSelectNestedList.Create(aTable : TNestedTable;
+  const aField : String; aFieldType : TFieldType; const aAsFieldName : String);
+begin
+  inherited Create;
+  FTable := aTable;
+  FField := aField;
+  FType := aFieldType;
+  SetAsField(aAsFieldName);
+end;
+
 procedure TSelectNestedList.SetAsField(const AFN : String);
 begin
   FAsField := AFN;
 
   if not ExtractTableField(AFN, FAsTableToken, FAsFieldToken) then
   begin
-    FAsTableToken := FOrigTable;
+    FAsTableToken := OrigTable;
     FAsFieldToken := FAsField;
   end;
 end;
 
-constructor TSelectNestedList.Create(const aOrigTable, aTable, aField : String;
-  aFieldType : TFieldType);
+function TSelectNestedList.GetOrigTable : String;
 begin
-  inherited Create;
-  FTable := aTable;
-  FOrigTable := aOrigTable;
-  FField := aField;
-  FType := aFieldType;
-  SetAsField(FTable + '.' + FField);
+  if assigned(FTable) then
+    Result := FTable.Table else
+      Result := '';
 end;
 
-constructor TSelectNestedList.Create(const aOrigTable, aTable, aField : String;
-  aFieldType : TFieldType; const aAsFieldName : String);
+function TSelectNestedList.GetTable : String;
 begin
-  inherited Create;
-  FTable := aTable;
-  FOrigTable := aOrigTable;
-  FField := aField;
-  FType := aFieldType;
-  SetAsField(aAsFieldName);
-end;
-
-constructor TSelectNestedList.Create(const aTable, aField : String;
-  aFieldType : TFieldType);
-begin
-  inherited Create;
-  FTable := aTable;
-  FOrigTable := aTable;
-  FField := aField;
-  FType := aFieldType;
-  SetAsField(FTable + '.' + FField);
+  if assigned(FTable) then
+    Result := FTable.QuotedIdName else
+        Result := '';
 end;
 
 constructor TSelectNestedList.Create(O : TSelectNestedList);
@@ -320,7 +320,6 @@ begin
   FTable := O.FTable;
   FType  := O.FType;
   FAsField := O.FAsField;
-  FOrigTable := O.FOrigTable;
   FAsFieldToken := O.FAsFieldToken;
   FAsTableToken := O.FAsTableToken;
   for i := 0 to O.Count-1 do
@@ -340,9 +339,9 @@ begin
       Result := Result + Self[i].GetExpr(WithPaths);
     end;
   end else
-   if (Length(FTable) > 0) and (Length(FField) > 0) then
+   if (Assigned(FTable)) and (Length(FField) > 0) then
    begin
-    Result := FTable + '.' + FField;
+    Result := FTable.QuotedIdName + '.' + FField;
     if WithPaths then
     begin
       Result := Result + ' as [' + FAsField + ']';
@@ -362,33 +361,25 @@ begin
       Result := Result + Self[i].GetFields;
     end;
   end else
-   if (Length(FTable) > 0) and (Length(FField) > 0) then
+   if (Assigned(FTable)) and (Length(FField) > 0) then
    begin
-    Result := FTable + '.' + FField;
+    Result := FTable.QuotedIdName + '.' + FField;
    end else
     Result := '';
 end;
 
-function TSelectNestedList.AddNewNestedField(const aTable, aField : String;
-  aFieldType : TFieldType) : TSelectNestedList;
+function TSelectNestedList.AddNewNestedField(aTable : TNestedTable;
+  const aField : String; aFieldType : TFieldType) : TSelectNestedList;
 begin
   Result := TSelectNestedList.Create(aTable, aField, aFieldType);
   Add(Result);
 end;
 
-function TSelectNestedList.AddNewNestedField(const aOrigTable, aTable,
-  aField : String; aFieldType : TFieldType) : TSelectNestedList;
-begin
-  Result := TSelectNestedList.Create(aOrigTable, aTable, aField, aFieldType);
-  Add(Result);
-end;
-
-function TSelectNestedList.AddNewNestedField(const aOrigTable, aTable,
-  aField : String; aFieldType : TFieldType; const aAsFieldName : String
+function TSelectNestedList.AddNewNestedField(aTable : TNestedTable;
+  const aField : String; aFieldType : TFieldType; const aAsFieldName : String
   ) : TSelectNestedList;
 begin
-  Result := TSelectNestedList.Create(aOrigTable, aTable, aField, aFieldType,
-                                                 aAsFieldName);
+  Result := TSelectNestedList.Create(aTable, aField, aFieldType, aAsFieldName);
   Add(Result);
 end;
 
@@ -425,7 +416,7 @@ begin
   FNestedTables := TNestedTablesList.Create;
   FWhereExpr := TRequestCompList.Create;
   FSelectExprPaths := false;
-  FSelectExpr := TSelectNestedList.Create('', '', ftReference);
+  FSelectExpr := TSelectNestedList.Create(nil, '', ftReference);
 end;
 
 function TSQLRequest.GetListOfFielda: String;
@@ -476,7 +467,7 @@ begin
   inherited Destroy;
 end;
 
-function TSQLRequest.AddNewNestedField(const aTable, aField : String;
+function TSQLRequest.AddNewNestedField(aTable : TNestedTable; const aField : String;
   aFieldType : TFieldType) : TSelectNestedList;
 begin
   Result := FSelectExpr.AddNewNestedField(aTable, aField, aFieldType);

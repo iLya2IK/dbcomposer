@@ -114,7 +114,7 @@ type
 
   TNestedExpr = class;
 
-  TSQLNestGenOption = (sngoCollapseForeignString);
+  TSQLNestGenOption = (sngoCollapseForeignString, sngoExcludePrimaryKeys);
   TSQLNestGenOptions = set of TSQLNestGenOption;
 
   TNestedExprsList = class(specialize TThreadSafeFastBaseList<TNestedExpr>);

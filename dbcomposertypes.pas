@@ -377,7 +377,8 @@ begin
       FSelectRequestForRefKey.Free;
     FSelectRequestForRefKey := BuildRequestForForeignKey(FRefTable,
                                                          '', FESL,
-                                                         [sngoCollapseForeignString]);
+                                                         [sngoCollapseForeignString,
+                                                          sngoExcludePrimaryKeys]);
     FSelectRequestForRefKey.AddNewCompValue(FRefTable.QuotedName + '.' + QuotedFieldName,
                                                            '=', inttostr(FRefId));
   end;
@@ -968,8 +969,6 @@ var
   i : integer;
   FFN : String;
   Added : Boolean;
-{  fs : TDBForIndxStringTable;
-  tb : TDBTable;}
 begin
   Added := false;
   for i := 0 to lst.Count-1 do
@@ -1357,7 +1356,7 @@ class function TDBControl.BuildRequestForForeignKey(ST : TDBTable;
   ExcludeFields : TStringList;
   Options : TSQLNestGenOptions) : TSQLRequest;
 
-procedure GetNestedExpr(const TableName : String; lTable : TDBTable;
+procedure GetNestedExpr(aNestedTable : TNestedTable; lTable : TDBTable;
                         Req : TSQLRequest;
                         Lst : TSelectNestedList);
 var
@@ -1365,7 +1364,7 @@ var
   subLst : TSelectNestedList;
   fT : TDBForIndxStringTable;
   fld : TDBField;
-  S : String;
+  TN : TNestedTable;
 begin
   for i := 0 to lTable.Count-1 do
   begin
@@ -1374,6 +1373,8 @@ begin
       if ExcludeFields.IndexOf(lTable.Name + '.' + lTable[i].FieldName) >= 0 then
         Continue;
     end;
+    if (sngoExcludePrimaryKeys in Options) and lTable[i].IsPrimaryKey then
+      Continue;
 
     if (sngoCollapseForeignString in Options) and lTable[i].IsForeignKey then
     begin
@@ -1388,16 +1389,15 @@ begin
 
         if assigned(fld) then
         begin
-          S := Req.AddNewNestedTable(lTable[i].ForeignKeyTable.Name).IdName;
+          TN := Req.AddNewNestedTable(lTable[i].ForeignKeyTable.Name);
 
-          subLst := Lst.AddNewNestedField(lTable[i].ForeignKeyTable.QuotedName,
-                                          S,
+          subLst := Lst.AddNewNestedField(TN,
                                           fld.QuotedName, fld.FieldType,
                                           Lst.GenOrigFieldName(lTable.QuotedName,
                                                                lTable[i].QuotedName));
 
           Req.AddNewCompValue(lTable[i].FullFieldName, '=',
-                              sqluQuotedIdIfNeeded(S) + '.' + sqluQuotedIdIfNeeded(lTable[i].ForeignKeyTo));
+                              TN.QuotedIdName + '.' + sqluQuotedIdIfNeeded(lTable[i].ForeignKeyTo));
 
         end;
 
@@ -1405,25 +1405,26 @@ begin
       end;
     end;
 
-    subLst := Lst.AddNewNestedField(lTable.QuotedName,
-                                    sqluQuotedIdIfNeeded(TableName), lTable[i].QuotedName,
-                                               lTable[i].FieldType);
+    subLst := Lst.AddNewNestedField(aNestedTable, lTable[i].QuotedName,
+                                                       lTable[i].FieldType);
 
     if lTable[i].IsForeignKey then
     begin
-      S := Req.AddNewNestedTable(lTable[i].ForeignKeyTable.Name).IdName;
+      TN := Req.AddNewNestedTable(lTable[i].ForeignKeyTable.Name);
 
-      GetNestedExpr(S, lTable[i].ForeignKeyTable, Req, subLst);
+      GetNestedExpr(TN, lTable[i].ForeignKeyTable, Req, subLst);
       Req.AddNewCompValue(lTable[i].FullFieldName, '=',
-                          sqluQuotedIdIfNeeded(S) + '.' + sqluQuotedIdIfNeeded(lTable[i].ForeignKeyTo));
+                          TN.QuotedIdName + '.' + sqluQuotedIdIfNeeded(lTable[i].ForeignKeyTo));
     end;
   end;
 end;
 
+var TN : TNestedTable;
 begin
   Result := TSQLRequest.Create(ST.Name, SF);
-  Result.AddNewNestedTable(ST.Name);
-  GetNestedExpr(ST.Name, ST, Result, Result.SelectExprLst);
+  TN := Result.AddNewNestedTable(ST.Name);
+
+  GetNestedExpr(TN, ST, Result, Result.SelectExprLst);
 end;
 
 procedure TDBControl.FillFKData(const S: String);
@@ -1458,6 +1459,7 @@ begin
 end;
 
 function TDBControl.GetSelectRequestForForeignKey : TSQLRequest;
+var FE : TStringList;
 begin
   if ((not Assigned(FSelectRequestForForeignKey)) or
                     FSelectRequestForForeignKey.IsEmpty) and
@@ -1465,9 +1467,16 @@ begin
   begin
     if Assigned(FSelectRequestForForeignKey) then
       FSelectRequestForForeignKey.Free;
-    FSelectRequestForForeignKey := BuildRequestForForeignKey(ForeignKeyTable,
-                                                             ForeignKeyTo, nil,
-                                                             [sngoCollapseForeignString]);
+    FE := TStringList.Create;
+    try
+      FE.Add(ForeignKeyTable.QuotedName + '.' + sqluQuotedIdIfNeeded(ForeignKeyTo));
+      FSelectRequestForForeignKey := BuildRequestForForeignKey(ForeignKeyTable,
+                                                               ForeignKeyTo, FE,
+                                                               [sngoCollapseForeignString,
+                                                                sngoExcludePrimaryKeys]);
+    finally
+      FE.Free;
+    end;
   end;
   Result := FSelectRequestForForeignKey;
 end;
