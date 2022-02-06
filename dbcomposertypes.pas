@@ -941,6 +941,11 @@ begin
   end else
   begin
     SelExpr := 'insert into ' + FTable.QuotedName + ' (' + S + ') values (' + S1 + ')';
+    if (sqluGetVersionMagNum >= 3) and
+       (sqluGetVersionMinNum >= 35) then
+    begin
+      SelExpr := SelExpr + ' returning ' + Table.PrimaryKeyField.QuotedName;
+    end;
   end;
 end;
 

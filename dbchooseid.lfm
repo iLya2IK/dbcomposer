@@ -25,7 +25,7 @@ object ChooseIdDlg: TChooseIdDlg
       Left = 1
       Top = 2
       Caption = 'ToolButton1'
-      ImageIndex = 2
+      ImageIndex = 13
       OnClick = ToolButton1Click
     end
     object ToolButton2: TToolButton
@@ -48,11 +48,11 @@ object ChooseIdDlg: TChooseIdDlg
     TabOrder = 1
     object FiltersComboBox: TComboBox
       Left = 0
-      Height = 23
+      Height = 21
       Top = 0
       Width = 812
       Align = alClient
-      ItemHeight = 15
+      ItemHeight = 13
       TabOrder = 0
     end
     object BitBtn1: TBitBtn

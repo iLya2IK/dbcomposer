@@ -25,6 +25,9 @@ const
   cCURPATH = '%CURPATH%';
   cDBPATH = '%DBPATH%';
 
+  cQuery = 'Query';
+  cAlteringTable = 'Alter';
+
   cIdField = 'id';
   cValField = 'val';
   cDescrField = 'descr';
@@ -125,6 +128,10 @@ resourcestring
 
   rsSetNewTableName = 'Set new table name';
   rsSetNewValue = 'Set new value';
+
+  rsNewQuery = 'New query';
+  rsSetNewQueryName = 'Set name for new query';
+  rsSetQueryNewName = 'Set new name for query';
 
   rsRecordSuccessUpdated = 'Record with id %d successfully updated in table ''%s''';
   rsRecordSuccessAdded = 'Record successfully added to table ''%s''. New id = %d';

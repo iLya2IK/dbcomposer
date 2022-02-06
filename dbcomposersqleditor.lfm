@@ -534,7 +534,7 @@ object EditSQLDialog: TEditSQLDialog
       TabOrder = 2
       object StaticText1: TStaticText
         Left = 0
-        Height = 21
+        Height = 14
         Top = 0
         Width = 282
         Align = alTop
@@ -549,8 +549,8 @@ object EditSQLDialog: TEditSQLDialog
       end
       object ComposersPages: TPageControl
         Left = 0
-        Height = 411
-        Top = 21
+        Height = 418
+        Top = 14
         Width = 282
         ActivePage = CreateTableComposer
         Align = alClient
@@ -558,23 +558,23 @@ object EditSQLDialog: TEditSQLDialog
         TabOrder = 1
         object CreateTableComposer: TTabSheet
           Caption = 'Create Table'
-          ClientHeight = 378
-          ClientWidth = 272
+          ClientHeight = 392
+          ClientWidth = 274
           object CreateTablePanel: TPanel
             Left = 0
-            Height = 378
+            Height = 392
             Top = 0
-            Width = 272
+            Width = 274
             Align = alClient
             BevelOuter = bvNone
-            ClientHeight = 378
-            ClientWidth = 272
+            ClientHeight = 392
+            ClientWidth = 274
             TabOrder = 0
             object ToolBar2: TToolBar
               Left = 0
               Height = 26
               Top = 0
-              Width = 272
+              Width = 274
               ButtonHeight = 24
               ButtonWidth = 23
               Caption = 'ToolBar2'
@@ -639,7 +639,7 @@ object EditSQLDialog: TEditSQLDialog
       OnClick = ToolButton1Click
     end
     object ToolButton2: TToolButton
-      Left = 26
+      Left = 25
       Top = 2
       AutoSize = True
       Caption = 'Cancel'
@@ -647,14 +647,14 @@ object EditSQLDialog: TEditSQLDialog
       OnClick = ToolButton2Click
     end
     object ToolButton3: TToolButton
-      Left = 74
+      Left = 65
       Height = 48
       Top = 2
       Caption = 'ToolButton3'
       Style = tbsSeparator
     end
     object ToolButton4: TToolButton
-      Left = 82
+      Left = 73
       Top = 2
       AutoSize = True
       Caption = 'Check'
@@ -662,7 +662,7 @@ object EditSQLDialog: TEditSQLDialog
       OnClick = ToolButton4Click
     end
     object ToolButton5: TToolButton
-      Left = 178
+      Left = 154
       Top = 2
       AutoSize = True
       Caption = 'Undo'
@@ -670,14 +670,14 @@ object EditSQLDialog: TEditSQLDialog
       OnClick = ToolButton5Click
     end
     object ToolButton6: TToolButton
-      Left = 127
+      Left = 110
       Height = 48
       Top = 2
       Caption = 'ToolButton6'
       Style = tbsSeparator
     end
     object ToolButton7: TToolButton
-      Left = 220
+      Left = 187
       Top = 2
       AutoSize = True
       Caption = 'Redo'
@@ -686,7 +686,7 @@ object EditSQLDialog: TEditSQLDialog
       ParentShowHint = False
     end
     object ResetButton: TToolButton
-      Left = 135
+      Left = 118
       Top = 2
       Caption = 'Reset'
       ImageIndex = 6
@@ -697,17 +697,17 @@ object EditSQLDialog: TEditSQLDialog
     Enabled = False
     Interval = 1500
     OnTimer = Timer1Timer
-    Left = 536
-    Top = 224
+    left = 536
+    top = 224
   end
   object AddMenu: TPopupMenu
     Images = Main.ImageList1
-    Left = 448
-    Top = 224
+    left = 448
+    top = 224
   end
   object PopupItemMenu: TPopupMenu
     Images = Main.ImageList1
-    Left = 360
-    Top = 224
+    left = 360
+    top = 224
   end
 end

@@ -42,6 +42,20 @@ uses
 
 type
 
+  { TDBQuerie }
+
+  TDBQuerie = class(TStringList)
+  private
+    FExprs : TSqliteExprs;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure Rebuild;
+    property Exprs : TSqliteExprs read FExprs;
+  end;
+
+  TDBQueriesList = class(specialize TFastBaseCollection<TDBQuerie>);
+
   { TIndxsCollection }
 
   TIndxsCollection = class(TFastCollection)
@@ -88,10 +102,18 @@ type
     AppConfig : TJSONPropStorage;
     ChooseTable : TListBox;
     LogMemo : TMemo;
+    CloseSheetItem: TMenuItem;
+    SQLSheetEditName : TMenuItem;
     Panel3: TPanel;
+    Panel4: TPanel;
+    SQLSheetPopUp: TPopupMenu;
+    SQLEditor: TSynEdit;
+    SQLSheets: TTabControl;
     ToolBar1 : TToolBar;
     PrefsButton : TToolButton;
     AboutButton : TToolButton;
+    ToolButton1: TToolButton;
+    ToolButton3: TToolButton;
     WizardsMenu : TPopupMenu;
     StructInfo : TMemo;
     ModifToolBar : TToolBar;
@@ -108,7 +130,6 @@ type
     Splitter2 : TSplitter;
     Splitter3 : TSplitter;
     Splitter4 : TSplitter;
-    SQLEditor : TSynEdit;
     SQLLog: TSynEdit;
     SynCompletion1: TSynCompletion;
     SQLSheet : TTabSheet;
@@ -150,12 +171,11 @@ type
     procedure FormDestroy(Sender : TObject);
     procedure FormHide(Sender: TObject);
     procedure FormShow(Sender : TObject);
-    procedure MainPagesChanging(Sender: TObject; var AllowChange: Boolean);
+    procedure CloseSheetItemClick(Sender: TObject);
     procedure NewCfgClick(Sender : TObject);
     procedure OpenCfgClick(Sender : TObject);
     procedure OpenDBClick(Sender : TObject);
     procedure MainPagesChange(Sender : TObject);
-    procedure Panel2Click(Sender: TObject);
     procedure PrefsButtonClick(Sender : TObject);
     procedure RefreshCfgClick(Sender : TObject);
     procedure ExecButtonClick(Sender : TObject);
@@ -167,6 +187,12 @@ type
       var Command : TSynEditorCommand; var AChar : TUTF8Char; Data : pointer);
     procedure SQLEditorStatusChange(Sender : TObject;
       Changes : TSynStatusChanges);
+    procedure SQLSheetEditNameClick(Sender : TObject);
+    procedure SQLSheetEditNameDrawItem(Sender : TObject; ACanvas : TCanvas;
+      ARect : TRect; AState : TOwnerDrawState);
+    procedure SQLSheetsChange(Sender: TObject);
+    procedure SQLSheetsGetImageIndex(Sender: TObject; TabIndex: Integer;
+      var ImageIndex: Integer);
     procedure SynCompletion1Execute(Sender: TObject);
     function SynCompletion1MeasureItem(const AKey: string; ACanvas: TCanvas;
       Selected: boolean; Index: integer): TPoint;
@@ -176,6 +202,7 @@ type
     procedure SaveCfgAsClick(Sender : TObject);
     procedure SaveCfgClick(Sender : TObject);
     procedure ComposeRequestClick(Sender: TObject);
+    procedure ToolButton1Click(Sender: TObject);
     procedure ToolButton4Click(Sender : TObject);
     procedure ToolButton5Click(Sender : TObject);
     procedure AddAndEditButtonClick(Sender : TObject);
@@ -202,6 +229,9 @@ type
     Indxs : TIndxsCollection;
     DBGrid     : TDBExtGrid;
     LoggerExport : TSynExporterWordWrap;
+
+    FSQLs : TDBQueriesList;
+    SQLSheetsTabIndex : integer;
 
     procedure HelperChanged(aState : TDBHelperState);
 
@@ -260,6 +290,8 @@ type
     procedure OnModifyDatabaseExpr(Expr : TJSONData);
     procedure OnExecuteExprLink(Expr : TJSONData);
 
+    procedure AddNewSQLSheet(const QName : String);
+    procedure SQLSheetsSwithTo(Index : integer);
     function ExtractSendersData(Sender : TObject; out cfgRec : TConfigRec;
                                                    out cfgItem : TTreeNode) : Boolean; overload;
     function ExtractSendersData(Sender : TObject; out cfgItem : TTreeNode) : Boolean; overload;
@@ -363,6 +395,26 @@ cObjPostfix = '_element';
 cSelectedItemBackGround = $885555;
 
 {$R *.lfm}
+
+{ TDBQuerie }
+
+constructor TDBQuerie.Create;
+begin
+  inherited Create;
+  FExprs := nil;
+end;
+
+destructor TDBQuerie.Destroy;
+begin
+  if assigned(FExprs) then FreeAndNil(FExprs);
+  inherited Destroy;
+end;
+
+procedure TDBQuerie.Rebuild;
+begin
+  if Assigned(FExprs) then FreeAndNil(FExprs);
+  FExprs := TSqliteExprs.Create(Text);
+end;
 
 { TStructVarLink }
 
@@ -619,11 +671,6 @@ begin
   end;
 end;
 
-procedure TMain.Panel2Click(Sender: TObject);
-begin
-
-end;
-
 procedure TMain.PrefsButtonClick(Sender : TObject);
 begin
   if ShowPreferences then
@@ -646,6 +693,9 @@ begin
 
   StringsIdxs := nil;
   Indxs := TIndxsCollection.Create;
+
+  FSQLs := TDBQueriesList.Create;
+  SQLSheetsTabIndex := -1;
 
   DBHelper.AppPath := ExtractFilePath(Application.ExeName);
   DBHelper.AddStateListener(@HelperChanged);
@@ -725,12 +775,17 @@ begin
   LoggerExport := TSynExporterWordWrap.Create(nil);
   LoggerExport.Highlighter := DBHelper.Sqlite3Highlighter;
 
-  CompleteHint := TCustomCompleteHint.Create(SQLSheet);
+  CompleteHint := TCustomCompleteHint.Create(SQLSheets);
   CompleteHint.SynEdit := SQLEditor;
   CompleteHint.ImageList := ImageList1;
   CompleteHint.CompletionKeys := FCompletionKeys;
   CompleteHint.OnSetFontParams := @(DBHelper.SetFontParamsFromCompletionObj);
-  CompleteHint.Parent := SQLSheet;
+  CompleteHint.Parent := SQLSheets;
+
+  SQLEditor.Visible := false;
+  ExecButton.Enabled := false;
+  EditExprRecord.Enabled := false;
+  ComposeRequest.Enabled := false;
 end;
 
 procedure TMain.ApplicationProperties1Exception(Sender : TObject; E : Exception
@@ -1680,6 +1735,7 @@ begin
             AltTable := TDBTableAlterComp.Create(T2, T1);
             try
               AltTable.Compare;
+              AddNewSQLSheet(cAlteringTable + '_' + T2.Name);
               SQLEditor.Text := AltTable.AlterExpr;
               MainPages.ActivePage := SQLSheet;
             finally
@@ -1707,6 +1763,45 @@ begin
       GenerateStructure;
       UpdateCfgStruct(FConfig.Struct.IndexOf(Expr));
     end;
+  end;
+end;
+
+procedure TMain.AddNewSQLSheet(const QName: String);
+var
+  Q : TDBQuerie;
+begin
+  Q := TDBQuerie.Create;
+  FSQLs.Add(Q);
+  SQLSheets.Tabs.Add(QName);
+
+  SQLSheetsSwithTo(FSQLs.Count-1);
+end;
+
+procedure TMain.SQLSheetsSwithTo(Index: integer);
+var Q : TDBQuerie;
+begin
+  if Index >= 0 then
+  begin
+    if (SQLSheetsTabIndex >=0) and (SQLEditor.Visible) then
+    begin
+      FSQLs[SQLSheetsTabIndex].Text := SQLEditor.Text;
+      FSQLs[SQLSheetsTabIndex].Rebuild;
+    end;
+    //
+    SQLSheetsTabIndex := Index;
+    //
+    Q := FSQLs[Index];
+    SQLEditor.Text := Q.Text;
+    SQLEditor.Visible := true;
+    ExecButton.Enabled := true;
+    EditExprRecord.Enabled := true;
+    ComposeRequest.Enabled := true;
+    SQLSheets.TabIndex := Index;
+  end else begin
+    SQLEditor.Visible := false;
+    ExecButton.Enabled := false;
+    EditExprRecord.Enabled := false;
+    ComposeRequest.Enabled := false;
   end;
 end;
 
@@ -2190,6 +2285,7 @@ begin
   Indxs.Free;
   if Assigned(FConfig) then FConfig.Free;
   FStructure.Free;
+  FSQLs.Free;
 end;
 
 procedure TMain.FormShow(Sender : TObject);
@@ -2212,12 +2308,23 @@ begin
     WizardsMenu.Items.Add(MI);
   end;
 
-
   Timer1.Enabled := True;
 end;
 
-procedure TMain.MainPagesChanging(Sender: TObject; var AllowChange: Boolean);
+procedure TMain.CloseSheetItemClick(Sender: TObject);
+var ind : integer;
 begin
+  ind := SQLSheets.TabIndex;
+  if (ind >= 0) then
+  begin
+    if ind > 0 then
+      SQLSheetsSwithTo(ind-1) else
+    if ind < (FSQLs.Count-1) then
+      SQLSheetsSwithTo(ind+1) else
+      SQLSheetsSwithTo(-1);
+    SQLSheets.Tabs.Delete(ind);
+    FSQLs.Delete(ind);
+  end;
 end;
 
 procedure TMain.NewCfgClick(Sender : TObject);
@@ -2327,6 +2434,7 @@ var
   aStmt : TSqliteStmt;
   needupddb : Boolean;
 begin
+  LogMemo.Lines.Clear;
   needupddb := false;
   Exprs := TSqliteExprs.Create(SQLEditor.Text);
   try
@@ -2432,7 +2540,7 @@ begin
               end;
           stmtSelect:
               i_torun := i;
-          stmtCreateTable, stmtAlterTable, stmtDropTable :
+          stmtCreateTable, stmtCreateTableAs, stmtAlterTable, stmtDropTable :
               needupddb := true;
           end;
         end;
@@ -2470,15 +2578,19 @@ begin
         DBGrid.ExecuteSQL(Exprs.OrigExpr);
 
       aStmt := TSqliteSynAnalizer.FindStmtForExpr(Exprs[0]);
-      if aStmt in [stmtCreateTable, stmtAlterTable, stmtDropTable] then
+      if aStmt in [stmtCreateTable, stmtCreateTableAs, stmtAlterTable, stmtDropTable] then
           needupddb := true;
     end;
 
-    if (not flag) and (si >= 0 ) then
+    if (not flag) then
     begin
-      SQLEditor.SelStart := Exprs[si].Pos;
-      SQLEditor.SelEnd := Exprs[si].Pos + Exprs[si].Len;
-    end;
+      if (si >= 0 ) then
+      begin
+        SQLEditor.SelStart := Exprs[si].Pos;
+        SQLEditor.SelEnd := Exprs[si].Pos + Exprs[si].Len;
+      end;
+    end else
+      LogMemo.Lines.Add(rsNoErrors);
   finally
     Exprs.Free;
   end;
@@ -2496,12 +2608,21 @@ begin
   begin
     if FModTables.CurTable.Apply(S, ES) then
     begin
-      if Length(S) > 0 then
-        DataSet.ExecuteDirect(S);
       if (FModTables.CurTable.Mode = mtmAddNew) then
       begin
-        S := DataSet.QuickQuery('select max('+FModTables.CurTable.Table.PrimaryKeyField.QuotedName+') from ' +
-                                        sqluQuotedIdIfNeeded(FModTables.CurTable.RecordTable), nil, false);
+        if Length(S) > 0 then
+        begin
+          if (sqluGetVersionMagNum >= 3) and
+             (sqluGetVersionMinNum >= 35) then
+          begin
+            S := DataSet.QuickQuery(S, nil, false);
+          end else
+          begin
+            DataSet.ExecuteDirect(S);
+            S := DataSet.QuickQuery('select max('+FModTables.CurTable.Table.PrimaryKeyField.QuotedName+') from ' +
+                                                  sqluQuotedIdIfNeeded(FModTables.CurTable.RecordTable), nil, false);
+          end;
+        end;
         if Length(S) > 0 then
         begin
           LogMemo.Lines.Add(Format(rsRecordSuccessAdded, [FModTables.CurTable.RecordTable, StrToInt(S)]));
@@ -2515,6 +2636,7 @@ begin
       begin
         if Length(S) > 0 then
         begin
+          DataSet.ExecuteDirect(S);
           LogMemo.Lines.Add(Format(rsRecordSuccessUpdated,
                                         [FModTables.CurTable.EditingKeyId,
                                          FModTables.CurTable.RecordTable]));
@@ -2556,6 +2678,37 @@ procedure TMain.SQLEditorStatusChange(Sender : TObject;
   Changes : TSynStatusChanges);
 begin
   CompleteHint.EditorStatusChange(Sender, Changes);
+end;
+
+procedure TMain.SQLSheetEditNameClick(Sender : TObject);
+var S : String;
+begin
+  if SQLSheets.TabIndex >= 0 then
+  begin
+    S := InputBox(rsSetQueryNewName, SQLSheets.Tabs[SQLSheets.TabIndex],
+                                     SQLSheets.Tabs[SQLSheets.TabIndex]);
+    if Length(S) > 0 then
+    begin
+      SQLSheets.Tabs[SQLSheets.TabIndex] := S;
+    end;
+  end;
+end;
+
+procedure TMain.SQLSheetEditNameDrawItem(Sender : TObject; ACanvas : TCanvas;
+  ARect : TRect; AState : TOwnerDrawState);
+begin
+
+end;
+
+procedure TMain.SQLSheetsChange(Sender: TObject);
+begin
+  SQLSheetsSwithTo(SQLSheets.TabIndex);
+end;
+
+procedure TMain.SQLSheetsGetImageIndex(Sender: TObject; TabIndex: Integer;
+  var ImageIndex: Integer);
+begin
+  ImageIndex := IMG_NOTE;
 end;
 
 procedure TMain.SynCompletion1Execute(Sender: TObject);
@@ -2729,6 +2882,16 @@ procedure TMain.ComposeRequestClick(Sender: TObject);
 begin
   if OpenEditSQLDialog(SQLEditor.Text, [], DataSet) then
     SQLEditor.Text := EditSQLDialog.ResultExpr;
+end;
+
+procedure TMain.ToolButton1Click(Sender: TObject);
+var S : String;
+begin
+  S := InputBox(rsNewQuery,
+                rsSetNewQueryName,
+                cQuery + Inttostr(FSQLs.Count + 1));
+  if Length(S) > 0 then
+    AddNewSQLSheet(S);
 end;
 
 procedure TMain.EditExprRecordClick(Sender : TObject);

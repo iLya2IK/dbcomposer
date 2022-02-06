@@ -1003,7 +1003,9 @@ begin
             if Assigned(analizer.ErroredToken) then
               l := analizer.ErroredToken.Len else
               l := synExprs[i].Len - analizer.ErrorPos;
-            Break;
+            SynEdit1.SelStart := p - 1;
+            SynEdit1.SelEnd := p + l - 1;
+            Exit;
           end;
         finally
           analizer.Free;

@@ -52,17 +52,33 @@ uses
 function TDBSqliteSynAnalizer.CreateTable(aStructure : TDBStructure;
   aOptions : TSqliteAnalizeCreateTableOptions) : TDBTable;
 var
-  T : TSqliteToken;
-  i, i0 : integer;
+  T, lT : TSqliteToken;
+  i, i0, li : integer;
 
-  State, State0 : Byte;
+  State, State0, lState : Byte;
   States : TFastByteList;
   curField : TDBField;
-  FN, FT, FD, cExpr, iExpr, cName, S : String;
+  FN, FT, FD, cExpr, lcExpr, iExpr, cName, S : String;
   aConstr : TDBConstraint;
   aConstrs : TDBConstraints;
   IsPK, flag, IsTmp, ChkExists,
     TableConstrMode, IndexedColIsSingle, DTComplete : Boolean;
+
+procedure SaveCursor;
+begin
+  lT := T;
+  li := i;
+  lState := State;
+  lcExpr := cExpr;
+end;
+
+procedure RestoreCursor;
+begin
+  T := lT;
+  i := li;
+  cExpr := lcExpr;
+  State := lState;
+end;
 
 procedure GoNextNonspace;
 var ind : integer;
@@ -217,6 +233,7 @@ begin
     try
       i := 0;
       State := 0;
+      lState := 0; li := 0; lT := nil; lcExpr := '';
       States.Add(State);
       IsTmp := false;
       ChkExists := false;
@@ -552,6 +569,12 @@ begin
                  NewConstraint(dbckNotNull);
                  ChangeStateGoNextNonspace(24);
                end else
+               {if CheckKeyword(kwNOTNULL) then
+               begin
+                 NewConstraint(dbckNotNull);
+                 ChangeStateGoNextNonspace(33);
+                 PushState(25);
+               end else}
                if CheckKeyword(kwUNIQUE) then begin
                  NewConstraint(dbckUnique);
                  ChangeStateGoNextNonspace(33);
@@ -769,8 +792,17 @@ begin
                    ChangeStateGoNextNonspace(41) else
                  if CheckKeyWord(kwMATCH) then
                    ChangeStateGoNextNonspace(42) else
-                 if CheckKeyWord(kwNOT) then
-                   ChangeStateGoNextNonspace(43) else
+                 if CheckKeyWord(kwNOT) then begin
+                   // may be next constrain
+                   SaveCursor;
+                   GoNextNonspace;
+                   if CheckKeyword(kwNULL) then
+                   begin
+                     RestoreCursor;
+                     PopState;
+                   end else
+                     ChangeState(43)
+                 end else
                  if CheckKeyWord(kwDEFERRABLE) then
                    ChangeStateGoNextNonspace(44) else
                    PopState;
